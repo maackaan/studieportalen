@@ -1,0 +1,49 @@
+name: Tester
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Hämta koden
+        uses: actions/checkout@v7
+      - name: Installera Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Installera Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Kör tester
+        run: python -m unittest discover -s tests -v
+      - name: Granska Python-beroenden
+        run: |
+          python -m pip install pip-audit==2.10.1
+          python -m pip_audit --requirement requirements-build-lock.txt --progress-spinner off
+      - name: Kontrollera kalenderimport
+        run: node --test tests/calendar_import.test.cjs
+      - name: Kontrollera JavaScript
+        run: node --check dist/calendar-import.js && node --check dist/app.js
+      - name: Installera gränssnittstest
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+      - name: Installera Chromium på Linux
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - name: Installera Chromium på Windows
+        if: runner.os == 'Windows'
+        run: npx playwright install chromium
+      - name: Testa gränssnitt och säkerhetskopiering
+        run: python tools/test_ui.py

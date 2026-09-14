@@ -1,0 +1,54 @@
+name: Felrapport
+description: Rapportera ett problem utan att dela privat studiedata.
+title: "[Fel] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tack för att du testar Studieportalen. Bifoga aldrig en säkerhetskopia, privata anteckningar, kursmaterial eller andra personuppgifter. Använd påhittade exempel om du behöver visa felet.
+  - type: input
+    id: version
+    attributes:
+      label: Appversion
+      description: Finns i filens egenskaper eller på GitHub-sidan där du laddade ned appen.
+      placeholder: 0.1.0-beta.1
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows-version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Så återskapas problemet
+      description: Beskriv korta steg med syntetisk testdata.
+      placeholder: |
+        1. Öppna Kurser
+        2. Lägg till en testkurs
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Förväntat resultat
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Faktiskt resultat
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Integritet
+      options:
+        - label: Jag har inte bifogat säkerhetskopia, privata anteckningar, kursmaterial eller personuppgifter.
+          required: true

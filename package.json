@@ -1,0 +1,6 @@
+{
+  "name": "studieportalen-tests",
+  "private": true,
+  "scripts": {"test": "node --test tests/calendar_import.test.cjs", "test:ui": "node tests/ui-smoke.cjs"},
+  "devDependencies": {"playwright": "1.62.1"}
+}

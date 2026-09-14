@@ -1,0 +1,35 @@
+{
+  "format": "studieportalen-backup",
+  "version": 1,
+  "exportedAt": "2026-09-13T00:00:00.000Z",
+  "appData": {
+    "courses": [
+      {
+        "id": "course-test-1",
+        "name": "Testkurs för återställning",
+        "code": "TEST01",
+        "description": "Syntetisk testdata.",
+        "url": "https://example.com/course",
+        "university": "other",
+        "universityName": "Annat universitet",
+        "color": "teal",
+        "archived": false,
+        "createdAt": "2026-09-13T00:00:00.000Z"
+      }
+    ],
+    "resources": [],
+    "events": [
+      {
+        "id": "event-test-1",
+        "type": "lesson",
+        "name": "Läs kapitel ett",
+        "courseId": "course-test-1",
+        "date": "2026-10-01T10:00:00.000Z",
+        "note": "Syntetisk testuppgift.",
+        "completed": false,
+        "createdAt": "2026-09-13T00:00:00.000Z"
+      }
+    ]
+  },
+  "files": []
+}

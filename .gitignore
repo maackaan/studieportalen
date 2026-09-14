@@ -1,0 +1,30 @@
+# Lokala körfiler
+.studieportalen.pid
+.studieportalen.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+build/
+build-output/
+release/
+*.spec
+node_modules/
+Studieportalen-Windows-x64.zip
+Studieportalen-Windows-x64.sha256
+
+# Redigerare och operativsystem
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Tillfälliga säkerhetskopior och exporter
+studieportalen-backup-*.json
+*.tmp
+
+# Lokal arbetsöverlämning för Codex
+NEXT_SESSION_PLAN.md

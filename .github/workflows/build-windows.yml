@@ -1,0 +1,113 @@
+name: Bygg Windows-app
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-app:
+    runs-on: windows-latest
+    steps:
+      - name: Hämta koden
+        uses: actions/checkout@v7
+
+      - name: Installera Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Installera Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Installera byggverktyg
+        run: python -m pip install --requirement requirements-build-lock.txt
+
+      - name: Kontrollera tom profil och funktioner
+        run: python -m unittest discover -s tests -v
+
+      - name: Kontrollera kalenderimport och JavaScript
+        run: |
+          node --test tests/calendar_import.test.cjs
+          node --check dist/calendar-import.js
+          node --check dist/app.js
+
+      - name: Skapa Windows-ikon
+        run: python tools/build_icon.py
+
+      - name: Testa gränssnitt och säkerhetskopiering
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install chromium
+          python tools/test_ui.py
+
+      - name: Bygg fristående program
+        run: >-
+          pyinstaller --noconfirm --clean --onefile --windowed
+          --name Studieportalen
+          --distpath build-output
+          --workpath build/pyinstaller
+          --hidden-import webview
+          --icon build/icon.ico
+          --version-file tools/windows-version-info.txt
+          --add-data "dist;dist"
+          desktop.py
+
+      - name: Starttesta det paketerade fönstret
+        shell: pwsh
+        run: |
+          $reportPath = Join-Path $PWD "build/exe-smoke.json"
+          $process = Start-Process -FilePath "build-output/Studieportalen.exe" -ArgumentList @("--self-test-report", $reportPath) -WindowStyle Hidden -PassThru
+          if (-not $process.WaitForExit(45000)) {
+            Stop-Process -Id $process.Id -Force
+            throw "Det paketerade fönstret avslutade inte starttestet inom 45 sekunder."
+          }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path $reportPath)) {
+            throw "Det paketerade fönstret kunde inte startas."
+          }
+          $result = Get-Content $reportPath -Raw | ConvertFrom-Json
+          if (-not $result.ok) {
+            throw "Starttestet misslyckades: $($result.error)"
+          }
+
+      - name: Skapa nedladdningspaket
+        run: |
+          python tools/collect_licenses.py
+          python tools/package_windows.py
+
+      - name: Ladda upp Windows-paket
+        uses: actions/upload-artifact@v7
+        with:
+          name: Studieportalen-Windows-x64
+          path: |
+            build-output/Studieportalen-Windows-x64.zip
+            build-output/Studieportalen-Windows-x64.sha256
+          if-no-files-found: error
+
+      - name: Skapa utkast till versionsmärkt nedladdning
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $releaseArgs = @(
+            $env:RELEASE_TAG
+            "build-output/Studieportalen-Windows-x64.zip"
+            "build-output/Studieportalen-Windows-x64.sha256"
+            "--generate-notes"
+            "--draft"
+            "--title"
+            "Studieportalen $env:RELEASE_TAG"
+          )
+          if ($env:RELEASE_TAG -match "-") {
+            $releaseArgs += "--prerelease"
+          }
+          gh release create @releaseArgs
