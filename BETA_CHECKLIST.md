@@ -16,17 +16,19 @@
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-14: 16 Python-tester, 5 kalendertester och isolerade gränssnittstester godkända lokalt. Den exakta Windows-byggmiljön är låst och granskningen rapporterar inga kända sårbarheter. Code Integrity-loggen bekräftar att Smart App Control i spärrläge blockerade den osignerade Windows-filen. Signaturen är `NotSigned`; inget Defender-utslag eller matchande AppLocker-händelse hittades. Appen är därför **inte verifierad för friktionsfri Windows-distribution ännu**. Inget har publicerats på GitHub och GitHub Actions har inte körts där.
+Status 2026-09-15: 16 Python-tester, 5 kalendertester och isolerade gränssnittstester är godkända lokalt. GitHub Actions har dessutom godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden finns i det privata förrådet `maackaan/studieportalen`. Användaren har laddat ned Actions-paketet och bekräftat att appen går att öppna på den egna datorn.
+
+Paketet är fortfarande osignerat (`NotSigned`). Det är därför lämpligt som privat vänbeta, men kan blockeras av Smart App Control på andra datorer och är inte verifierat för friktionsfri offentlig Windows-distribution. Ingen GitHub Release är publicerad ännu.
 
 Gränssnittstesterna omfattar tom profil, kursers hela livscykel, anteckning, fil, filstorleksgräns, kalenderurval, dubbletter, slutförd uppgift, borttagning/ångra, tre fönsterbredder, tangentbordsmeny, omladdning, export/återställning, skadad profil, återställningsfel vid full lagring, säkerhetshuvuden och offline-omstart. HTML-bilagor förhandsvisas i en isolerad ram utan skripträttigheter.
 
-1. Skapa GitHub-förrådet och bestäm dess slutliga adress.
-2. Bekräfta den förberedda nedladdningsadressen `maackaan/studieportalen` i README.
+1. ~~Skapa GitHub-förrådet och bestäm dess slutliga adress.~~ Klart: privat `maackaan/studieportalen`.
+2. ~~Bekräfta den förberedda nedladdningsadressen `maackaan/studieportalen` i README.~~ Klart.
 3. Bestäm om källkoden ska sakna återanvändningslicens under betan eller publiceras med exempelvis MIT/GPL.
-4. Skicka koden och skapa taggen `v0.1.0-beta.1`.
-5. Kontrollera att GitHub-bygget skapar både ZIP-filen och `.sha256`-filen.
+4. Koden är uppladdad. Skapa taggen `v0.1.0-beta.1` och kontrollera Release-utkastet.
+5. GitHub-bygget är godkänt och Actions-paketet har provstartats. Kontrollera även ZIP- och `.sha256`-filerna i Release-utkastet.
 6. Välj signeringslösning, signera programfilen och bygg sedan om ZIP och kontrollsumma. Privata signeringsnycklar får aldrig läggas i förrådet.
-7. Ladda ned ZIP-filen på en ren Windows-profil och genomför acceptanstestet nedan utan att stänga av säkerhetsskydd.
+7. Start från nedladdad ZIP är godkänd på användarens dator. Genomför resten av acceptanstestet utan att stänga av säkerhetsskydd.
 8. Publicera Release-utkastet först efter godkänt acceptanstest.
 
 Tredjepartslicenserna för komponenterna i Windows-paketet samlas automatiskt och följer med som `TREDJEPARTSLICENSER.txt`. Detta är separat från valet av licens för projektets egen kod.
