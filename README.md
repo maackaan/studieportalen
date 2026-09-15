@@ -2,7 +2,7 @@
 
 En lokal portal för kurser, gamla tentor, kursbilder, länkar, anteckningar och studieplanering.
 
-[⬇ Ladda ner Studieportalen v0.1.0-beta.1 för Windows](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.1/Studieportalen-Windows-x64.zip)
+[⬇ Ladda ner Studieportalen v0.1.0-beta.2 för Windows](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.2/Studieportalen-Windows-x64.zip)
 
 **Offentlig förhandsversion.** På [versionssidan](https://github.com/maackaan/studieportalen/releases) väljer du `Studieportalen-Windows-x64.zip`, inte GitHubs automatiska “Source code”-filer. Betan är osignerad och kan därför ge en Windows-varning eller blockeras på vissa datorer; se [betachecklistan](BETA_CHECKLIST.md).
 
