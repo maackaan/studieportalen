@@ -51,6 +51,8 @@ class CourseLookupTests(unittest.TestCase):
         course = server.lookup_kth("DD1337")
         self.assertEqual(course["name"], "Programmering")
         self.assertEqual(course["credits"], "7,0 hp")
+        self.assertEqual(course["courseHomeUrl"], "https://canvas.kth.se/")
+        self.assertIn("kth.se/student/studier/schema", course["scheduleUrl"])
 
     @patch("server.fetch_html")
     def test_chalmers_lookup(self, fetch_html):
@@ -62,6 +64,8 @@ class CourseLookupTests(unittest.TestCase):
         course = server.lookup_chalmers("TDA362")
         self.assertEqual(course["name"], "Computer graphics")
         self.assertEqual(course["credits"], "7,5 hp")
+        self.assertEqual(course["courseHomeUrl"], "https://canvas.chalmers.se/")
+        self.assertIn("timeedit.net/chalmers", course["scheduleUrl"])
 
     @patch("server.fetch_html")
     def test_lund_general_course_page(self, fetch_html):
@@ -75,6 +79,8 @@ class CourseLookupTests(unittest.TestCase):
         self.assertEqual(course["name"], "Matematik: Envariabelanalys")
         self.assertEqual(course["credits"], "15 hp")
         self.assertEqual(course["description"], "En introduktion till analys.")
+        self.assertEqual(course["courseHomeUrl"], "https://canvas.education.lu.se/")
+        self.assertIn("timeedit.net/lu", course["scheduleUrl"])
 
     @patch("server.fetch_json")
     @patch("server.fetch_html")
@@ -99,6 +105,8 @@ class CourseLookupTests(unittest.TestCase):
         self.assertEqual(course["name"], "Programmering, grundkurs")
         self.assertEqual(course["credits"], "10,5 hp")
         self.assertIn("2026/27", course["description"])
+        self.assertEqual(course["courseHomeUrl"], "https://canvas.education.lu.se/")
+        self.assertIn("timeedit.net/lu", course["scheduleUrl"])
 
 
 if __name__ == "__main__":

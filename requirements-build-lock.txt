@@ -1,4 +1,4 @@
-# Exact Windows build environment for Studieportalen 0.1.0-beta.1.
+# Exact Windows build environment for Studieportalen 0.1.0-beta.2.
 # Update this file deliberately together with requirements-build.txt and rerun audits.
 altgraph==0.17.5
 bottle==0.13.4

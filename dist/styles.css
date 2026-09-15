@@ -203,6 +203,7 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .course-hero-actions button { height: 44px; flex: 0 0 auto; }
 .course-hero-actions .secondary-button { background: rgba(255,255,255,.96); }
 .course-detail-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 22px; margin-top: 22px; }
+.course-detail-main { display: grid; align-content: start; row-gap: 30px; }
 .course-detail-body .panel-heading { flex-wrap: wrap; }
 .course-detail-body .panel { min-height: 260px; }
 .course-info-text { color: var(--muted); }

@@ -7,6 +7,7 @@
 - Säkerhetskopiering och återställning med bekräftelse.
 - Kursuppslag för LiU, KTH, Chalmers och Lund.
 - Separat LiU-kursinformation, offentlig IDA-kurshemsida och TimeEdit-länk.
+- Genvägar till Canvas och officiell schemasökning för KTH, Chalmers och Lund.
 - Lokal `.ics`-import med förhandsgranskning, tentamensklassning och dubblettskydd.
 - Redigering, arkivering, återställning och ångra borttagning.
 - Fristående Windows-bygge och automatiserat GitHub Release-utkast.
@@ -16,20 +17,20 @@
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-15: 16 Python-tester, 5 kalendertester och isolerade gränssnittstester är godkända lokalt. GitHub Actions har dessutom godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden finns i det privata förrådet `maackaan/studieportalen`. Användaren har laddat ned Actions-paketet och bekräftat att appen går att öppna på den egna datorn.
+Status 2026-09-15: 16 Python-tester, 5 kalendertester och isolerade gränssnittstester är godkända lokalt. GitHub Actions har dessutom godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.1` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned paketet och bekräftat att appen går att öppna.
 
-Paketet är fortfarande osignerat (`NotSigned`). Det är därför lämpligt som privat vänbeta, men kan blockeras av Smart App Control på andra datorer och är inte verifierat för friktionsfri offentlig Windows-distribution. Ingen GitHub Release är publicerad ännu.
+Paketet är fortfarande osignerat (`NotSigned`). Testaren fick en Windows-varning men kunde välja att köra appen; andra datorer kan blockera den hårdare. Betan är därför inte verifierad för friktionsfri offentlig Windows-distribution.
 
 Gränssnittstesterna omfattar tom profil, kursers hela livscykel, anteckning, fil, filstorleksgräns, kalenderurval, dubbletter, slutförd uppgift, borttagning/ångra, tre fönsterbredder, tangentbordsmeny, omladdning, export/återställning, skadad profil, återställningsfel vid full lagring, säkerhetshuvuden och offline-omstart. HTML-bilagor förhandsvisas i en isolerad ram utan skripträttigheter.
 
-1. ~~Skapa GitHub-förrådet och bestäm dess slutliga adress.~~ Klart: privat `maackaan/studieportalen`.
+1. ~~Skapa GitHub-förrådet och bestäm dess slutliga adress.~~ Klart: offentligt `maackaan/studieportalen`.
 2. ~~Bekräfta den förberedda nedladdningsadressen `maackaan/studieportalen` i README.~~ Klart.
 3. Bestäm om källkoden ska sakna återanvändningslicens under betan eller publiceras med exempelvis MIT/GPL.
-4. Koden är uppladdad. Skapa taggen `v0.1.0-beta.1` och kontrollera Release-utkastet.
-5. GitHub-bygget är godkänt och Actions-paketet har provstartats. Kontrollera även ZIP- och `.sha256`-filerna i Release-utkastet.
+4. ~~Ladda upp koden och skapa taggen `v0.1.0-beta.1`.~~ Klart.
+5. ~~Kontrollera ZIP- och `.sha256`-filerna från GitHub-bygget.~~ Klart.
 6. Välj signeringslösning, signera programfilen och bygg sedan om ZIP och kontrollsumma. Privata signeringsnycklar får aldrig läggas i förrådet.
 7. Start från nedladdad ZIP är godkänd på användarens dator. Genomför resten av acceptanstestet utan att stänga av säkerhetsskydd.
-8. Publicera Release-utkastet först efter godkänt acceptanstest.
+8. ~~Publicera den första förhandsversionen.~~ Klart; fortsätt samla testresultat före nästa version.
 
 Tredjepartslicenserna för komponenterna i Windows-paketet samlas automatiskt och följer med som `TREDJEPARTSLICENSER.txt`. Detta är separat från valet av licens för projektets egen kod.
 

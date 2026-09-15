@@ -101,7 +101,15 @@ def lookup_kth(code: str) -> dict:
     if credits_match:
         name = re.sub(rf"\s*{re.escape(credits_match.group(0))}.*$", "", name, flags=re.I).strip()
     description = extract(r'<meta[^>]+name=["\']description["\'][^>]+content=["\'](.*?)["\']', source)
-    return {"code": code, "name": name or code, "credits": f"{credits_match.group(1)} hp" if credits_match else "", "url": url, "description": description}
+    return {
+        "code": code,
+        "name": name or code,
+        "credits": f"{credits_match.group(1)} hp" if credits_match else "",
+        "url": url,
+        "courseHomeUrl": "https://canvas.kth.se/",
+        "scheduleUrl": "https://www.kth.se/student/studier/schema",
+        "description": description,
+    }
 
 
 def lookup_chalmers(code: str) -> dict:
@@ -113,7 +121,15 @@ def lookup_chalmers(code: str) -> dict:
     name = re.sub(r"^(?:Sök kursplan|Kursplan för)\s*", "", heading, flags=re.I).strip()
     credits_match = re.search(r"(?:Omfattning\s*)?([0-9]+(?:[,.][0-9]+)?)\s*(?:Högskolepoäng|hp)", clean_text(source), flags=re.I)
     description = extract(r'<meta[^>]+name=["\']description["\'][^>]+content=["\'](.*?)["\']', source)
-    return {"code": code, "name": name or code, "credits": f"{credits_match.group(1)} hp" if credits_match else "", "url": url, "description": description}
+    return {
+        "code": code,
+        "name": name or code,
+        "credits": f"{credits_match.group(1)} hp" if credits_match else "",
+        "url": url,
+        "courseHomeUrl": "https://canvas.chalmers.se/",
+        "scheduleUrl": "https://cloud.timeedit.net/chalmers/web/public/",
+        "description": description,
+    }
 
 
 def lookup_lth(code: str) -> dict:
@@ -152,6 +168,8 @@ def lookup_lth(code: str) -> dict:
             "name": course.get("kursSve") or course.get("kursEng") or heading or code,
             "credits": f"{credits_match.group(1).replace('.', ',')} hp" if credits_match else "",
             "url": url,
+            "courseHomeUrl": "https://canvas.education.lu.se/",
+            "scheduleUrl": "https://cloud.timeedit.net/lu/web/",
             "description": f"Aktuell kursplan från LTH:s officiella kurskatalog ({catalogue.get('lasar', '')}).".replace(" ().", "."),
         }
     raise LookupError("Kursen hittades inte hos Lunds universitet.")
@@ -173,6 +191,8 @@ def lookup_lund(code: str) -> dict:
                 "name": heading,
                 "credits": f"{credits_match.group(1).replace('.', ',')} hp" if credits_match else "",
                 "url": url,
+                "courseHomeUrl": "https://canvas.education.lu.se/",
+                "scheduleUrl": "https://cloud.timeedit.net/lu/web/",
                 "description": description,
             }
     except HTTPError as error:

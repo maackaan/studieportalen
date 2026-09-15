@@ -2,9 +2,9 @@
 
 En lokal portal för kurser, gamla tentor, kursbilder, länkar, anteckningar och studieplanering.
 
-[⬇ Ladda ner för Windows](https://github.com/maackaan/studieportalen/releases)
+[⬇ Ladda ner Studieportalen v0.1.0-beta.1 för Windows](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.1/Studieportalen-Windows-x64.zip)
 
-**Förberedd länk – ingen version är publicerad ännu.** Adressen förutsätter att förrådet får namnet `maackaan/studieportalen`. På versionssidan väljer du `Studieportalen-Windows-x64.zip`, inte GitHubs automatiska “Source code”-filer. Aktuell betakandidat är osignerad och kan blockeras av Windows; se [betachecklistan](BETA_CHECKLIST.md).
+**Offentlig förhandsversion.** På [versionssidan](https://github.com/maackaan/studieportalen/releases) väljer du `Studieportalen-Windows-x64.zip`, inte GitHubs automatiska “Source code”-filer. Betan är osignerad och kan därför ge en Windows-varning eller blockeras på vissa datorer; se [betachecklistan](BETA_CHECKLIST.md).
 
 ## För vanliga användare
 
@@ -73,7 +73,7 @@ Planeringen stöder deadlines, tentor, lektionsuppgifter, läsning och laboratio
 
 Kurser kan redigeras och arkiveras. Resurser och planeringsposter kan också redigeras utan att deras ursprungliga skapandedatum, klarstatus eller uppladdade fil försvinner. Arkiveringen är reversibel och behåller kursens resurser och planering; på kurssidan går det att växla mellan aktiva, arkiverade och alla kurser.
 
-Appen startar tom. Sök på kurskod för att hämta offentlig kursinformation från LiU, KTH, Chalmers eller Lunds universitet, eller välj **Annat universitet** och fyll i uppgifterna själv. Lund-sökningen täcker både universitetets gemensamma kurswebb och aktuella LTH-kurser. För LiU skiljer appen nu på den officiella kursinformationen och IDA:s separata offentliga kurshemsidor, där uppgifter, material och deadlines ofta publiceras. LiU-kurser får även en genväg till universitetets offentliga TimeEdit-sökning.
+Appen startar tom. Sök på kurskod för att hämta offentlig kursinformation från LiU, KTH, Chalmers eller Lunds universitet, eller välj **Annat universitet** och fyll i uppgifterna själv. Lund-sökningen täcker både universitetets gemensamma kurswebb och aktuella LTH-kurser. För LiU skiljer appen på den officiella kursinformationen och IDA:s separata offentliga kurshemsidor. KTH-, Chalmers- och Lundkurser får i stället genvägar till lärosätets Canvas och officiella schemaingång. Canvas kräver studentinloggning och visar bara kursytor som användaren själv har tillgång till; appen försöker inte läsa innehåll eller inlämningsuppgifter därifrån. Schemalänkarna öppnar respektive lärosätes TimeEdit-sökning, där kurskoden kan användas.
 
 ## Säkerhetskopiering
 
@@ -110,17 +110,17 @@ Själva webbgränssnittet är medvetet byggt utan ramverk eller paketinstallatio
 
 ## Publicera på GitHub
 
-Projektet är förberett för att läggas i ett GitHub-förråd. Lokala loggar, processfiler, Python-cache och exporterade säkerhetskopior ignoreras, och tester körs automatiskt för varje push och pull request. Arbetsflödet **Bygg Windows-app** verifierar dessutom att standardprofilen är tom innan det skapar den fristående ZIP-filen på en Windows-server. En manuell körning ger ett testpaket i GitHub Actions. En versionstagg som `v0.1.0-beta.1` skapar ett Release-utkast som projektägaren granskar och publicerar efter godkänt acceptanstest.
+Projektet är offentligt på `maackaan/studieportalen`. Lokala loggar, processfiler, Python-cache och exporterade säkerhetskopior ignoreras, och tester körs automatiskt för varje push och pull request. Arbetsflödet **Bygg Windows-app** verifierar dessutom att standardprofilen är tom innan det skapar den fristående ZIP-filen på en Windows-server. En manuell körning ger ett testpaket i GitHub Actions. En versionstagg skapar ett Release-utkast som projektägaren granskar före publicering.
 
 ### Privat betatest
 
 GitHub har ingen publik men olistad Release där en hemlig länk ensam ger åtkomst. Börja i stället med ett privat förråd och bjud in testarna. De behöver acceptera inbjudan och vara inloggade för att öppna Release-länken. För read-only-testare är ett privat förråd i en GitHub-organisation bäst, eftersom de kan få rollen **Read**; ett privat förråd på ett personligt konto ger vanliga collaborators skrivrättigheter. En tagg som `v0.1.0-beta.1` markeras automatiskt som en förhandsversion.
 
-När testperioden är klar kan samma förråd göras offentligt, eller så kan en separat publik Release skapas. Den som redan har laddat ned en privat version behåller förstås sin lokala kopia.
+Förrådet och den första förhandsversionen är nu offentliga. Den som laddar ned en ny version behåller sin lokala profil; programfiler och användardata lagras separat.
 
 Andra kan ladda ned eller klona projektet och köra det lokalt med Python. En ren publicering via GitHub Pages visar gränssnittet, men den automatiska sökningen i universitetens kurskataloger kräver Python-servern. För en helt webbaserad publik version behöver kursuppslaget senare flyttas till en liten serverfunktion.
 
-Innan förrådet görs offentligt behöver projektägaren välja vilka återanvändningsrättigheter som ska ges. Ingen licens har lagts till automatiskt.
+Ingen projektlicens har lagts till automatiskt. Källkoden är synlig, men projektägaren har ännu inte gett någon generell återanvändningslicens.
 
 ### Kontroller och kodsignering
 
