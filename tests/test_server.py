@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+from pathlib import Path
 from urllib.error import HTTPError
 from unittest.mock import patch
 
@@ -6,6 +8,11 @@ import server
 
 
 class CourseLookupTests(unittest.TestCase):
+    def test_macos_bundle_uses_resource_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(server.sys, "platform", "darwin"), patch.dict(server.os.environ, {"RESOURCEPATH": directory}):
+                self.assertEqual(server.application_root(), Path(directory))
+
     def test_clean_text_removes_markup_and_normalizes_spacing(self):
         self.assertEqual(server.clean_text(" <strong>Hej</strong> &amp;   välkommen "), "Hej & välkommen")
 

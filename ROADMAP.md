@@ -79,19 +79,21 @@
    - En sparad manuell kursordning används både på kurssidan och i översikten.
    - Tillgängliga flytta upp/ned-kontroller fungerar med mus och tangentbord; drag-and-drop är inte nödvändigt.
 
-9. **Samlad kalendersida – grundflödet genomfört lokalt**
-   - `Kalender` finns i vänsternavigeringen och visar kurskopplade samt allmänna datum i en agenda/listvy.
-   - Poster kan läggas till, redigeras, slutföras, filtreras och öppnas mot eventuell kurs direkt från sidan.
-   - `.ics`-importen finns på kalendersidan med val av kurs eller `Allmänt`, förhandsgranskning och dubblettskydd.
-   - Senare: månadsvy samt uttryckligen angivna publika TimeEdit-prenumerationslänkar med dubblett-, ändrings- och avbokningshantering. Ingen generell proxy eller inloggningsskrapning.
+9. **Samlad kalendersida – veckovy genomförd lokalt**
+   - `Kalender` visar måndag–söndag i sju kolumner med veckonavigering, veckonummer, dagens markering och aktuell tidslinje.
+   - Deadlines, föreläsningar, seminarier, lektioner, läsning, laborationer och tentamina placeras som tidsblock. Nya schemapass föreslås bli två timmar och kan få valfri sluttid.
+   - Poster kan läggas till och redigeras direkt; ett tryck på ett block öppnar redigeringen. Smala skärmar har en egen horisontell schemarullning utan att hela sidan blir bred.
+   - `.ics`-importen finns på kalendersidan med val av kurs eller `Allmänt`, förhandsgranskning, start-/sluttid och dubblettskydd.
+   - Senare: sida-vid-sida-layout för samtidiga block, månadsvy samt uttryckligen angivna publika TimeEdit-prenumerationslänkar med dubblett-, ändrings- och avbokningshantering. Ingen generell proxy eller inloggningsskrapning.
 
 10. **Schemalänkar – rättade lokalt**
    - LiU-, KTH- och Chalmers-länkarna använder lärosätenas aktuella officiella schemavägar.
    - Lund behåller den centrala TimeEdit-ingången eftersom universitetet använder flera fakultetsspecifika vyer.
    - URL-konstruktionen täcks av adaptertester. Förifylld kurskod kan läggas till senare om respektive tjänst erbjuder stabila offentliga parametrar.
+   - De granskade TimeEdit-ingångarna kräver sökning eller ett sparat schemas interna länk-ID; appen gissar därför inte instabila direktadresser. Kurskoden kan kopieras med en knapp bredvid schemalänken.
 
 11. **macOS-version – byggspår förberett lokalt**
-   - Separat macOS-paketering och ett manuellt GitHub Actions-bygge för Apple Silicon och Intel är förberedda. De skapar testartefakter men ingen automatisk release.
+   - Separat macOS-paketering med pywebviews rekommenderade `py2app` och ett manuellt GitHub Actions-bygge för Apple Silicon och Intel är förberedda. De skapar testartefakter men ingen automatisk release.
    - Återstår: kör byggena och verifiera dataplats, fönster, filer, backup, kursuppslag och uppdatering på riktig Mac före publik release.
    - Kodsignering och Apple-notarisation hanteras som ett separat beslut och får inte kringgås eller antas vara kostnadsfritt.
 

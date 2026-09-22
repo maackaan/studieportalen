@@ -30,8 +30,10 @@ MACOS_RUNTIME_DISTRIBUTIONS = (
     "proxy_tools",
     "bottle",
     "typing_extensions",
-    "packaging",
-    "pyinstaller",
+    "py2app",
+    "modulegraph",
+    "macholib",
+    "altgraph",
 )
 
 

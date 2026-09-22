@@ -43,6 +43,8 @@
     const text = summary;
     if (/(?:^|\W)(?:tentamen|tenta|exam|examination)(?:$|\W)/i.test(text)) return 'exam';
     if (/(?:^|\W)(?:laboration|laborationer|lab)(?:$|\W)/i.test(text)) return 'lab';
+    if (/(?:^|\W)(?:föreläsning|föreläsningar|lecture)(?:$|\W)/i.test(text)) return 'lecture';
+    if (/(?:^|\W)(?:seminarium|seminarier|seminar)(?:$|\W)/i.test(text)) return 'seminar';
     return 'lesson';
   }
 
@@ -53,24 +55,26 @@
     if (blocks.length > 2000) throw new Error('Kalendern innehåller för många händelser. Välj en kortare period.');
     return blocks.flatMap((block) => {
       const values = {};
-      let timeZone = '';
+      const timeZones = {};
       block.split(/\r?\n/).forEach((line) => {
         const colon = line.indexOf(':');
         if (colon < 0) return;
         const key = line.slice(0, colon).split(';', 1)[0].toUpperCase();
-        if (key === 'DTSTART') timeZone = line.slice(0, colon).match(/TZID="?([^;"\r\n]+)/i)?.[1] || '';
+        if (key === 'DTSTART' || key === 'DTEND') timeZones[key] = line.slice(0, colon).match(/TZID="?([^;"\r\n]+)/i)?.[1] || '';
         if (!values[key]) values[key] = line.slice(colon + 1);
       });
       if (values.STATUS === 'CANCELLED') return [];
       if (values.RRULE || values.RDATE || values.EXDATE) throw new Error('Återkommande kalenderregler stöds inte ännu. Exportera en kalender med separata tillfällen.');
-      const date = parseDate(values.DTSTART, timeZone);
+      const date = parseDate(values.DTSTART, timeZones.DTSTART);
       if (!date) throw new Error('Ett datum eller en tidszon kunde inte tolkas. Ingen händelse importerades.');
+      const endDate = values.DTEND ? parseDate(values.DTEND, timeZones.DTEND || timeZones.DTSTART) : null;
+      if (values.DTEND && (!endDate || endDate <= date)) throw new Error('En sluttid i kalendern kunde inte tolkas. Ingen händelse importerades.');
       const name = unescapeText(values.SUMMARY || 'Schemahändelse').slice(0, 120) || 'Schemahändelse';
       const description = unescapeText(values.DESCRIPTION || '');
       const location = unescapeText(values.LOCATION || '');
       const note = [location ? `Plats: ${location}` : '', description].filter(Boolean).join('\n').slice(0, 2000);
       const sourceId = unescapeText(values.UID ? `${values.UID}${values['RECURRENCE-ID'] ? `|${values['RECURRENCE-ID']}` : ''}` : `${values.DTSTART || ''}|${name}`).slice(0, 500);
-      return [{ sourceId, name, date: date.toISOString(), type: eventType(name, description), note }];
+      return [{ sourceId, name, date: date.toISOString(), endDate: endDate?.toISOString() || '', type: eventType(name, description), note }];
     });
   }
 

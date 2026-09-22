@@ -9,6 +9,7 @@ test('parses TimeEdit-style calendar events and unfolds lines', () => {
     'BEGIN:VEVENT',
     'UID:tddd27-exam-1',
     'DTSTART:20261020T121500Z',
+    'DTEND:20261020T161500Z',
     'SUMMARY:Tentamen TDDD27',
     'LOCATION:TER2',
     'DESCRIPTION:Anmälan krävs\\nTa med legitimation',
@@ -25,6 +26,7 @@ test('parses TimeEdit-style calendar events and unfolds lines', () => {
 
   assert.equal(events.length, 2);
   assert.equal(events[0].type, 'exam');
+  assert.equal(events[0].endDate, '2026-10-20T16:15:00.000Z');
   assert.match(events[0].note, /Plats: TER2/);
   assert.match(events[0].note, /Ta med legitimation/);
   assert.equal(events[1].type, 'lab');
@@ -38,9 +40,10 @@ test('uses local morning for all-day values and ignores malformed dates', () => 
 });
 
 test('does not classify ordinary teaching as an exam', () => {
-  assert.equal(eventType('Föreläsning', 'Introduktion'), 'lesson');
+  assert.equal(eventType('Föreläsning', 'Introduktion'), 'lecture');
+  assert.equal(eventType('Seminarium', ''), 'seminar');
   assert.equal(eventType('Digital examination', ''), 'exam');
-  assert.equal(eventType('Föreläsning', 'Förberedelse för tentamen'), 'lesson');
+  assert.equal(eventType('Föreläsning', 'Förberedelse för tentamen'), 'lecture');
 });
 
 test('rejects impossible dates and converts Stockholm time regardless of computer timezone', () => {
@@ -50,6 +53,13 @@ test('rejects impossible dates and converts Stockholm time regardless of compute
   assert.equal(parseDate('20260918T081500', 'Europe/Stockholm').toISOString(), '2026-09-18T06:15:00.000Z');
   assert.equal(parseDate('20261218T081500', 'Europe/Stockholm').toISOString(), '2026-12-18T07:15:00.000Z');
   assert.equal(parseDate('20260329T023000', 'Europe/Stockholm'), null);
+});
+
+test('uses the event time zone for end times and rejects an invalid range', () => {
+  const [event] = parseCalendar('BEGIN:VEVENT\nDTSTART;TZID=Europe/Stockholm:20261218T081500\nDTEND;TZID=Europe/Stockholm:20261218T100000\nSUMMARY:Föreläsning\nEND:VEVENT');
+  assert.equal(event.date, '2026-12-18T07:15:00.000Z');
+  assert.equal(event.endDate, '2026-12-18T09:00:00.000Z');
+  assert.throws(() => parseCalendar('BEGIN:VEVENT\nDTSTART:20260918T101500Z\nDTEND:20260918T091500Z\nEND:VEVENT'), /sluttid/);
 });
 
 test('skips cancelled events and rejects recurrence rather than silently losing occurrences', () => {

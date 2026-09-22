@@ -49,7 +49,7 @@ let lastSavedState = structuredClone(state);
 let currentView = 'overview';
 let currentResourceFilter = 'all';
 let currentCourseFilter = 'active';
-let currentCalendarFilter = 'upcoming';
+let calendarWeekStart = startOfWeek(new Date());
 let selectedCourseId = null;
 let addMode = 'resource';
 let editingCourseId = null;
@@ -75,7 +75,9 @@ const els = {
   resourceEmpty: document.querySelector('#resourceEmpty'),
   courseDetail: document.querySelector('#courseDetail'),
   courseResultCount: document.querySelector('#courseResultCount'),
-  calendarList: document.querySelector('#calendarList'),
+  calendarWeek: document.querySelector('#calendarWeek'),
+  calendarWeekScroll: document.querySelector('#calendarWeekScroll'),
+  calendarWeekLabel: document.querySelector('#calendarWeekLabel'),
   calendarResultCount: document.querySelector('#calendarResultCount'),
   calendarImportTarget: document.querySelector('#calendarImportTarget'),
   dialog: document.querySelector('#addDialog'),
@@ -106,6 +108,7 @@ const els = {
   dateName: document.querySelector('#dateName'),
   dateCourse: document.querySelector('#dateCourse'),
   dateValue: document.querySelector('#dateValue'),
+  dateEndValue: document.querySelector('#dateEndValue'),
   dateNote: document.querySelector('#dateNote'),
   dialogKicker: document.querySelector('#dialogKicker'),
   dialogTitle: document.querySelector('#dialogTitle'),
@@ -294,21 +297,97 @@ function dateItemMarkup(item) {
   const course = state.courses.find((courseItem) => courseItem.id === item.courseId);
   const month = new Intl.DateTimeFormat('sv-SE', { month: 'short' }).format(date).replace('.', '');
   const time = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' }).format(date);
-  const label = { exam: 'Tentamen', deadline: 'Deadline', lesson: 'Lektionsuppgift', reading: 'Läsning', lab: 'Laboration' }[item.type] || 'Planering';
+  const explicitEnd = item.endDate && new Date(item.endDate) > date ? new Date(item.endDate) : null;
+  const timeRange = explicitEnd ? `${time}–${formatTime(explicitEnd)}` : time;
+  const label = eventTypeLabel(item.type);
   const context = course ? `<button type="button" class="event-course-link" data-open-event-course="${course.id}">${escapeHtml(course.name)}</button>` : '<span>Allmänt</span>';
-  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span>· ${time}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
+  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span>· ${timeRange}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
+}
+
+function startOfWeek(value) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return date;
+}
+
+function addDays(value, days) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function sameLocalDay(first, second) {
+  return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
+}
+
+function formatTime(value) {
+  return new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' }).format(value);
+}
+
+function calendarEventEnd(item) {
+  const start = new Date(item.date);
+  const savedEnd = item.endDate ? new Date(item.endDate) : null;
+  if (savedEnd && !Number.isNaN(savedEnd.getTime()) && savedEnd > start) return savedEnd;
+  const defaultHours = { deadline: 0.75, reading: 1, exam: 3, lecture: 2, seminar: 2, lesson: 2, lab: 2 }[item.type] || 1;
+  return new Date(start.getTime() + defaultHours * 60 * 60 * 1000);
+}
+
+function isoWeekNumber(value) {
+  const date = new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function calendarWeekRangeLabel(start) {
+  const end = addDays(start, 6);
+  const sameMonth = start.getMonth() === end.getMonth();
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const startText = new Intl.DateTimeFormat('sv-SE', sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' }).format(start).replace('.', '');
+  const endText = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) }).format(end);
+  return `Vecka ${isoWeekNumber(start)} · ${startText}–${endText}${sameYear ? ` ${end.getFullYear()}` : ''}`;
 }
 
 function renderCalendar() {
-  const now = new Date();
+  const weekEnd = addDays(calendarWeekStart, 7);
+  const days = Array.from({ length: 7 }, (_, index) => addDays(calendarWeekStart, index));
   const events = [...state.events]
-    .filter((item) => currentCalendarFilter === 'all'
-      || (currentCalendarFilter === 'completed' ? item.completed : !item.completed && new Date(item.date) >= now))
+    .filter((item) => {
+      const date = new Date(item.date);
+      return date >= calendarWeekStart && date < weekEnd;
+    })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const startHour = 6;
+  const endHour = 24;
+  const slotsPerHour = 4;
+  const slotCount = (endHour - startHour) * slotsPerHour;
+  const now = new Date();
+
+  els.calendarWeekLabel.textContent = calendarWeekRangeLabel(calendarWeekStart);
   els.calendarResultCount.textContent = `${events.length} ${events.length === 1 ? 'post' : 'poster'}`;
-  els.calendarList.innerHTML = events.length
-    ? events.map((item) => dateItemMarkup(item)).join('')
-    : `<div class="empty-state">${emptyMarkup(currentCalendarFilter === 'completed' ? 'Inget markerat som klart' : 'Inget planerat', 'Lägg till ett datum eller importera en .ics-fil.')}</div>`;
+  const headers = days.map((day) => `<div class="calendar-day-heading${sameLocalDay(day, now) ? ' today' : ''}"><span>${new Intl.DateTimeFormat('sv-SE', { weekday: 'short' }).format(day).replace('.', '')}</span><strong>${day.getDate()}</strong></div>`).join('');
+  const timeLabels = Array.from({ length: endHour - startHour }, (_, index) => `<span class="calendar-start-${index * slotsPerHour}">${String(startHour + index).padStart(2, '0')}:00</span>`).join('');
+  const columns = days.map((day) => {
+    const dayItems = events.filter((item) => sameLocalDay(new Date(item.date), day));
+    const blocks = dayItems.map((item) => {
+      const start = new Date(item.date);
+      const end = calendarEventEnd(item);
+      const course = state.courses.find((candidate) => candidate.id === item.courseId);
+      const startMinutes = start.getHours() * 60 + start.getMinutes();
+      const endMinutes = end.getDate() === start.getDate() ? end.getHours() * 60 + end.getMinutes() : endHour * 60;
+      const startSlot = Math.max(0, Math.min(slotCount - 1, Math.floor((startMinutes - startHour * 60) / 15)));
+      const durationSlots = Math.max(2, Math.min(slotCount - startSlot, Math.ceil((endMinutes - Math.max(startMinutes, startHour * 60)) / 15)));
+      const time = `${formatTime(start)}–${formatTime(end)}`;
+      return `<button type="button" class="calendar-event ${item.type} calendar-start-${startSlot} calendar-span-${durationSlots}${item.completed ? ' completed' : ''}" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}, ${time}"><strong>${escapeHtml(item.name)}</strong><span>${time}</span><small>${escapeHtml(course?.code || course?.name || 'Allmänt')}</small></button>`;
+    }).join('');
+    const currentMinute = now.getHours() * 60 + now.getMinutes();
+    const currentLine = sameLocalDay(day, now) && currentMinute >= startHour * 60 && currentMinute <= endHour * 60
+      ? `<div class="calendar-current-time calendar-start-${Math.min(slotCount - 1, Math.floor((currentMinute - startHour * 60) / 15))}" aria-label="Nu, ${formatTime(now)}"><span></span></div>`
+      : '';
+    return `<div class="calendar-day-column${sameLocalDay(day, now) ? ' today' : ''}">${blocks}${currentLine}</div>`;
+  }).join('');
+  els.calendarWeek.innerHTML = `<div class="week-calendar"><div class="calendar-week-header"><div class="calendar-time-corner">Tid</div>${headers}</div><div class="calendar-week-body"><div class="calendar-time-axis">${timeLabels}</div><div class="calendar-day-columns">${columns}</div></div></div>`;
 }
 
 function renderCourses() {
@@ -330,7 +409,7 @@ function renderCourses() {
         <div class="course-card-foot"><span>${count} ${count === 1 ? 'resurs' : 'resurser'}</span><button class="course-open" data-course-id="${course.id}">Öppna →</button></div>
       </article>`;
     }).join('')
-    : `<div class="empty-state" style="grid-column:1/-1">${emptyMarkup(emptyTitle, emptyText)}</div>`;
+    : `<div class="empty-state course-grid-empty">${emptyMarkup(emptyTitle, emptyText)}</div>`;
 }
 
 function renderResources() {
@@ -373,7 +452,7 @@ function renderCourseDetail(courseId) {
     <div class="course-detail-body"><div class="course-detail-main"><section class="panel"><div class="panel-heading"><div><p class="section-kicker">MATERIAL</p><h2>Kursresurser</h2></div><span class="result-count">${resources.length} st</span></div>
       <div class="recent-list">${resources.length ? resources.map((resource) => `<article class="recent-item"><span class="resource-icon ${resource.type}">${svg(typeIcon(resource.type))}</span><div><strong>${escapeHtml(resource.name)}</strong><small>${typeLabel(resource.type)} · ${formatDate(resource.createdAt)}</small></div><div class="item-actions"><button class="open-mini" data-open-resource="${resource.id}" aria-label="Öppna ${escapeHtml(resource.name)}">${svg('external')}</button><button class="open-mini" data-edit-resource="${resource.id}" aria-label="Redigera ${escapeHtml(resource.name)}">${svg('edit')}</button></div></article>`).join('') : `<div class="empty-state">${emptyMarkup('Inget material ännu', 'Lägg till information, en tenta, bild, länk eller anteckning.')}</div>`}</div></section>
       <section class="panel"><div class="panel-heading"><div><p class="section-kicker">PLANERING</p><h2>Uppgifter och viktiga datum</h2></div><div class="panel-heading-actions"><button class="secondary-button compact" data-import-calendar-course="${course.id}">${svg('upload')} Importera kalender</button><button class="icon-button" data-add-date-course="${course.id}" aria-label="Lägg till planering">${svg('plus')}</button></div></div><div class="recent-list">${events.length ? events.map((event) => dateItemMarkup(event)).join('') : `<div class="empty-state">${emptyMarkup('Inget planerat ännu', 'Lägg till en uppgift, deadline, laboration eller tentamen.')}</div>`}</div></section></div>
-      <aside class="panel"><div class="panel-heading"><div><p class="section-kicker">OM KURSEN</p><h2>Information</h2></div></div><p class="course-info-text">${escapeHtml(course.description || 'Ingen beskrivning ännu.')}</p><div class="course-links">${course.courseHomeUrl ? `<a class="external-link" href="${escapeHtml(course.courseHomeUrl)}" target="_blank" rel="noopener">Kurshemsida och uppgifter ${svg('external')}</a>` : ''}${course.url ? `<a class="external-link" href="${escapeHtml(course.url)}" target="_blank" rel="noopener">Officiell kursinformation ${svg('external')}</a>` : ''}${course.scheduleUrl ? `<a class="external-link" href="${escapeHtml(course.scheduleUrl)}" target="_blank" rel="noopener">Öppna schema eller kalender ${svg('calendar')}</a>` : ''}${!course.courseHomeUrl && !course.url && !course.scheduleUrl ? '<p class="course-info-text">Inga kurslänkar tillagda.</p>' : ''}</div><div style="margin-top:30px"><button class="text-button delete-course" data-delete-course="${course.id}">Ta bort kurs</button></div></aside></div>`;
+      <aside class="panel"><div class="panel-heading"><div><p class="section-kicker">OM KURSEN</p><h2>Information</h2></div></div><p class="course-info-text">${escapeHtml(course.description || 'Ingen beskrivning ännu.')}</p><div class="course-links">${course.courseHomeUrl ? `<a class="external-link" href="${escapeHtml(course.courseHomeUrl)}" target="_blank" rel="noopener">Kurshemsida och uppgifter ${svg('external')}</a>` : ''}${course.url ? `<a class="external-link" href="${escapeHtml(course.url)}" target="_blank" rel="noopener">Officiell kursinformation ${svg('external')}</a>` : ''}${course.scheduleUrl ? `<div class="schedule-link-row"><a class="external-link" href="${escapeHtml(course.scheduleUrl)}" target="_blank" rel="noopener">Öppna schema eller kalender ${svg('calendar')}</a>${course.code ? `<button type="button" class="copy-course-code" data-copy-course-code="${escapeHtml(course.code)}">Kopiera ${escapeHtml(course.code)}</button>` : ''}</div>` : ''}${!course.courseHomeUrl && !course.url && !course.scheduleUrl ? '<p class="course-info-text">Inga kurslänkar tillagda.</p>' : ''}</div><div class="course-delete-area"><button class="text-button delete-course" data-delete-course="${course.id}">Ta bort kurs</button></div></aside></div>`;
 }
 
 function switchView(view, { updateHash = true, preserveFocus = false } = {}) {
@@ -466,6 +545,13 @@ function toLocalDateTimeValue(value) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
+function suggestDateEnd() {
+  if (els.dateEndValue.value || !els.dateValue.value || !['lecture', 'seminar', 'lesson', 'lab'].includes(els.dateType.value)) return;
+  const start = new Date(els.dateValue.value);
+  if (Number.isNaN(start.getTime())) return;
+  els.dateEndValue.value = toLocalDateTimeValue(new Date(start.getTime() + 2 * 60 * 60 * 1000));
+}
+
 function editEvent(eventId) {
   const item = state.events.find((event) => event.id === eventId);
   if (!item) return;
@@ -478,6 +564,7 @@ function editEvent(eventId) {
   els.dateName.value = item.name || '';
   els.dateCourse.value = item.courseId || '';
   els.dateValue.value = toLocalDateTimeValue(item.date);
+  els.dateEndValue.value = item.endDate ? toLocalDateTimeValue(item.endDate) : '';
   els.dateNote.value = item.note || '';
   setTimeout(() => els.dateName.focus(), 40);
 }
@@ -508,8 +595,11 @@ async function handleSubmit(event) {
     const name = els.dateName.value.trim();
     if (!name) return showFormError('Skriv ett namn på datumet.');
     if (!els.dateValue.value) return showFormError('Välj datum och tid.');
+    const startDate = new Date(els.dateValue.value);
+    const endDate = els.dateEndValue.value ? new Date(els.dateEndValue.value) : null;
+    if (endDate && endDate <= startDate) return showFormError('Sluttiden måste vara efter starttiden.');
     const existing = editingEventId ? state.events.find((item) => item.id === editingEventId) : null;
-    const planItem = { id: existing?.id || uid('event'), type: els.dateType.value, name, courseId: els.dateCourse.value, date: new Date(els.dateValue.value).toISOString(), note: els.dateNote.value.trim(), completed: existing?.completed || false, createdAt: existing?.createdAt || new Date().toISOString() };
+    const planItem = { id: existing?.id || uid('event'), type: els.dateType.value, name, courseId: els.dateCourse.value, date: startDate.toISOString(), endDate: endDate?.toISOString() || '', note: els.dateNote.value.trim(), completed: existing?.completed || false, createdAt: existing?.createdAt || new Date().toISOString() };
     if (editingEventId && !existing) return showFormError('Planeringsposten kunde inte hittas.');
     if (existing) Object.assign(existing, planItem);
     else state.events.push(planItem);
@@ -634,6 +724,22 @@ function normalizeUrl(value) {
     const url = new URL(withProtocol);
     return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
   } catch (_) { return ''; }
+}
+
+async function copyCourseCode(code) {
+  try {
+    await navigator.clipboard.writeText(code);
+  } catch (_) {
+    const helper = document.createElement('textarea');
+    helper.className = 'clipboard-helper';
+    helper.value = code;
+    helper.readOnly = true;
+    document.body.append(helper);
+    helper.select();
+    document.execCommand('copy');
+    helper.remove();
+  }
+  showToast(`${code} har kopierats`);
 }
 
 async function openResource(id) {
@@ -798,6 +904,8 @@ window.addEventListener('resize', handleViewportChange);
 els.courseSearch.addEventListener('input', renderCourses);
 els.resourceSearch.addEventListener('input', renderResources);
 els.resourceType.addEventListener('change', updateResourceFields);
+els.dateType.addEventListener('change', suggestDateEnd);
+els.dateValue.addEventListener('change', suggestDateEnd);
 els.searchCourseButton.addEventListener('click', searchCourse);
 els.courseCodeSearch.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); searchCourse(); } });
 els.form.addEventListener('submit', handleSubmit);
@@ -821,11 +929,18 @@ document.querySelectorAll('[data-course-filter]').forEach((button) => button.add
   document.querySelectorAll('[data-course-filter]').forEach((pill) => pill.classList.toggle('active', pill === button));
   renderCourses();
 }));
-document.querySelectorAll('[data-calendar-filter]').forEach((button) => button.addEventListener('click', () => {
-  currentCalendarFilter = button.dataset.calendarFilter;
-  document.querySelectorAll('[data-calendar-filter]').forEach((pill) => pill.classList.toggle('active', pill === button));
+document.querySelector('#calendarPreviousWeek').addEventListener('click', () => {
+  calendarWeekStart = addDays(calendarWeekStart, -7);
   renderCalendar();
-}));
+});
+document.querySelector('#calendarToday').addEventListener('click', () => {
+  calendarWeekStart = startOfWeek(new Date());
+  renderCalendar();
+});
+document.querySelector('#calendarNextWeek').addEventListener('click', () => {
+  calendarWeekStart = addDays(calendarWeekStart, 7);
+  renderCalendar();
+});
 
 els.resourceFile.addEventListener('change', () => {
   const label = document.querySelector('.file-drop strong');
@@ -862,6 +977,7 @@ document.addEventListener('click', (event) => {
   const editEventTarget = event.target.closest('[data-edit-event]');
   const toggleEventTarget = event.target.closest('[data-toggle-event]');
   const openEventCourseTarget = event.target.closest('[data-open-event-course]');
+  const copyCourseCodeTarget = event.target.closest('[data-copy-course-code]');
   if (moveCourseTarget) moveCourse(moveCourseTarget.dataset.moveCourse, moveCourseTarget.dataset.moveDirection);
   else if (courseTarget) openCourse(courseTarget.dataset.courseId);
   else if (openTarget) openResource(openTarget.dataset.openResource);
@@ -880,6 +996,7 @@ document.addEventListener('click', (event) => {
   else if (editEventTarget) editEvent(editEventTarget.dataset.editEvent);
   else if (toggleEventTarget) toggleEvent(toggleEventTarget.dataset.toggleEvent);
   else if (openEventCourseTarget) openCourse(openEventCourseTarget.dataset.openEventCourse);
+  else if (copyCourseCodeTarget) copyCourseCode(copyCourseCodeTarget.dataset.copyCourseCode);
 });
 
 document.addEventListener('keydown', (event) => {
@@ -1035,8 +1152,10 @@ function validateBackup(input) {
   const eventIds = new Set();
   const events = data.events.map((item) => {
     const date = new Date(item.date);
+    const candidateEnd = item.endDate ? new Date(item.endDate) : null;
     const courseId = cleanBackupText(item.courseId, 160);
-    if (!validBackupId(item.id) || eventIds.has(item.id) || (courseId && !courseIds.has(courseId)) || Number.isNaN(date.getTime()) || !['deadline', 'exam', 'lesson', 'reading', 'lab'].includes(item.type)) throw new Error('En planeringspost i säkerhetskopian är ogiltig.');
+    if (!validBackupId(item.id) || eventIds.has(item.id) || (courseId && !courseIds.has(courseId)) || Number.isNaN(date.getTime()) || !['deadline', 'exam', 'lecture', 'seminar', 'lesson', 'reading', 'lab'].includes(item.type)) throw new Error('En planeringspost i säkerhetskopian är ogiltig.');
+    if (candidateEnd && (Number.isNaN(candidateEnd.getTime()) || candidateEnd <= date)) throw new Error('En sluttid i säkerhetskopian är ogiltig.');
     eventIds.add(item.id);
     return {
       id: item.id,
@@ -1044,6 +1163,7 @@ function validateBackup(input) {
       name: cleanBackupText(item.name, 120).trim() || 'Namnlöst datum',
       courseId,
       date: date.toISOString(),
+      endDate: candidateEnd?.toISOString() || '',
       note: cleanBackupText(item.note, 2000),
       completed: Boolean(item.completed),
       source: item.source === 'ical' ? 'ical' : '',
@@ -1157,6 +1277,7 @@ async function importCalendar(event) {
       courseId,
       name: item.name,
       date: item.date,
+      endDate: item.endDate || '',
       type: item.type,
       note: item.note,
       completed: false,
@@ -1173,7 +1294,7 @@ async function importCalendar(event) {
 }
 
 function eventTypeLabel(type) {
-  return { exam: 'Tentamen', lab: 'Laboration', lesson: 'Schemapass' }[type] || 'Schemapass';
+  return { deadline: 'Deadline', exam: 'Tentamen', lecture: 'Föreläsning', seminar: 'Seminarium', lab: 'Laboration', lesson: 'Lektion eller uppgift', reading: 'Läsning' }[type] || 'Schemapass';
 }
 
 function previewCalendar(items, courseName, duplicateCount) {
@@ -1185,7 +1306,7 @@ function previewCalendar(items, courseName, duplicateCount) {
       <p>${escapeHtml(courseName)} · ${items.length} nya händelser</p>
       <p>Kontrollera kurs, datum och typ. Importen är en ögonblicksbild och uppdateras inte automatiskt.</p>
       ${duplicateCount ? `<p>${duplicateCount} dubbletter hoppas över.</p>` : ''}
-      <div class="calendar-choices">${items.map((item, index) => `<label><input type="checkbox" name="event" value="${index}" checked><span><strong>${escapeHtml(item.name)}</strong><br>${escapeHtml(new Date(item.date).toLocaleString('sv-SE'))} · ${escapeHtml(eventTypeLabel(item.type))}</span></label>`).join('')}</div>
+      <div class="calendar-choices">${items.map((item, index) => `<label><input type="checkbox" name="event" value="${index}" checked><span><strong>${escapeHtml(item.name)}</strong><br>${escapeHtml(new Date(item.date).toLocaleString('sv-SE'))}${item.endDate ? `–${escapeHtml(formatTime(new Date(item.endDate)))}` : ''} · ${escapeHtml(eventTypeLabel(item.type))}</span></label>`).join('')}</div>
       <div class="modal-actions"><button class="secondary-button" value="cancel">Avbryt</button><button class="primary-button" value="import">Importera valda</button></div></form>`;
     dialog.addEventListener('close', () => {
       const selected = dialog.returnValue === 'import' ? [...dialog.querySelectorAll('input:checked')].map((input) => items[Number(input.value)]) : [];

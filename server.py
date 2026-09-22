@@ -16,7 +16,14 @@ from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 
-ROOT = Path(__file__).resolve().parent
+def application_root() -> Path:
+    """Hitta webbappens rot både i källkod och i ett py2app-paket."""
+    if sys.platform == "darwin" and os.environ.get("RESOURCEPATH"):
+        return Path(os.environ["RESOURCEPATH"])
+    return Path(__file__).resolve().parent
+
+
+ROOT = application_root()
 DIST = ROOT / "dist"
 USER_AGENT = "Studieportalen/1.2 (+local personal study organizer)"
 CONTENT_SECURITY_POLICY = (

@@ -51,16 +51,7 @@ jobs:
           iconutil -c icns build/Studieportalen.iconset -o build/icon.icns
 
       - name: Bygg fristående Mac-program
-        run: >-
-          pyinstaller --noconfirm --clean --onedir --windowed
-          --name Studieportalen
-          --osx-bundle-identifier se.maackaan.studieportalen
-          --distpath build-output
-          --workpath build/pyinstaller
-          --hidden-import webview
-          --icon build/icon.icns
-          --add-data "dist:dist"
-          desktop.py
+        run: python tools/setup_macos.py py2app --dist-dir build-output --bdist-base build/py2app
 
       - name: Starttesta det paketerade fönstret
         run: |
