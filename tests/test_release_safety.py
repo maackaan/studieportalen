@@ -75,6 +75,7 @@ class ReleaseSafetyTests(unittest.TestCase):
         self.assertIn("resources", setup)
         self.assertIn("Studieportalen.app", packager)
         self.assertNotIn("studieportalen-backup-", packager)
+        self.assertTrue((ROOT / "licenses" / "Python-LICENSE.txt").is_file())
 
 
 if __name__ == "__main__":

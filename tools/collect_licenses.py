@@ -67,9 +67,18 @@ def main() -> None:
     is_macos = sys.platform == "darwin"
     output = ROOT / "build" / ("THIRD_PARTY_NOTICES-MACOS.txt" if is_macos else "THIRD_PARTY_NOTICES.txt")
     runtime_distributions = MACOS_RUNTIME_DISTRIBUTIONS if is_macos else WINDOWS_RUNTIME_DISTRIBUTIONS
-    python_license = Path(sys.base_prefix) / "LICENSE.txt"
+    installed_python_license = Path(sys.base_prefix) / "LICENSE.txt"
+    bundled_python_license = ROOT / "licenses" / "Python-LICENSE.txt"
+    python_license = (
+        installed_python_license
+        if installed_python_license.is_file()
+        else bundled_python_license
+    )
     if not python_license.is_file():
-        raise RuntimeError(f"Python-licensen saknas: {python_license}")
+        raise RuntimeError(
+            "Python-licensen saknas både i installationen och projektets licensmapp: "
+            f"{installed_python_license}, {bundled_python_license}"
+        )
     sections = [
         "STUDIEPORTALEN — TREDJEPARTSLICENSER\n",
         f"Denna fil gäller komponenter som följer med {'macOS' if is_macos else 'Windows'}-paketet. "
