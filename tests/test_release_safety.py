@@ -7,6 +7,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReleaseSafetyTests(unittest.TestCase):
+    def test_beta3_version_and_downloads_are_consistent(self):
+        start_page = (ROOT / "dist" / "index.html").read_text(encoding="utf-8")
+        windows_info = (ROOT / "tools" / "windows-version-info.txt").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Version 0.1.0-beta.3", start_page)
+        self.assertNotIn("beta.3-dev", start_page)
+        self.assertIn("ProductVersion', '0.1.0-beta.3'", windows_info)
+        self.assertIn("v0.1.0-beta.3/Studieportalen-Windows-x64.zip", readme)
+        self.assertIn("v0.1.0-beta.3/Studieportalen-macOS-arm64.zip", readme)
+        self.assertIn("v0.1.0-beta.3/Studieportalen-macOS-x64.zip", readme)
+
     def test_app_starts_with_an_empty_profile(self):
         app_source = (ROOT / "dist" / "app.js").read_text(encoding="utf-8")
         match = re.search(r"const sampleData = \{(?P<body>.*?)\n\};", app_source, re.DOTALL)
@@ -65,7 +77,8 @@ class ReleaseSafetyTests(unittest.TestCase):
         setup = (ROOT / "tools" / "setup_macos.py").read_text(encoding="utf-8")
 
         self.assertIn("workflow_dispatch:", workflow)
-        self.assertNotIn("tags:", workflow)
+        self.assertIn("tags:", workflow)
+        self.assertIn("gh release upload", workflow)
         self.assertIn("macos-26", workflow)
         self.assertIn("macos-26-intel", workflow)
         self.assertIn("--self-test-report", workflow)

@@ -16,7 +16,7 @@ const key = 'studieportalen-data-v2';
     const firstResponse = await page.goto(process.env.APP_URL || 'http://localhost:4173');
     assert.match((await firstResponse.allHeaders())['content-security-policy'],/object-src 'none'/);
     assert.equal(await page.locator('#courseCount').textContent(), '0');
-    assert.equal(await page.locator('.app-version').textContent(), 'Version 0.1.0-beta.3-dev');
+    assert.equal(await page.locator('.app-version').textContent(), 'Version 0.1.0-beta.3');
     await page.evaluate(() => {
       state.courses = Array.from({length: 5}, (_, index) => ({
         id: `overview-${index + 1}`,

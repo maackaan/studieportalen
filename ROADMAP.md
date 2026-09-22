@@ -66,7 +66,7 @@
    - En automatisk releasesäkerhetskontroll kräver en tom standardprofil och inga externa resurser på startsidan.
    - En separat integritetsbeskrivning följer med Windows-paketet.
    - En versionstagg skapar automatiskt ett GitHub Release-utkast; manuella byggen stannar som testpaket i GitHub Actions.
-   - Den offentliga förhandsversionen `v0.1.0-beta.2` är publicerad med direktlänk till Windows-ZIP.
+   - Förhandsversionen `v0.1.0-beta.3` publiceras med separata paket för Windows, Mac med Apple Silicon och Mac med Intel.
    - Återstår: välj licens, kontrollera en helt ren Windows-dator och inför kodsignering för smidigare start.
 
 7. **Allmänna datum och resurser – genomförd lokalt**

@@ -1,4 +1,4 @@
-const CACHE = 'studieportalen-shell-v23';
+const CACHE = 'studieportalen-shell-v24';
 const APP_SHELL = ['./', './index.html', './styles.css?v=23', './calendar-import.js?v=3', './app.js?v=23', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {

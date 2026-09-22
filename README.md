@@ -2,9 +2,11 @@
 
 En lokal portal för kurser, gamla tentor, kursbilder, länkar, anteckningar och studieplanering.
 
-[⬇ Ladda ner Studieportalen v0.1.0-beta.2 för Windows](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.2/Studieportalen-Windows-x64.zip)
+- [⬇ Ladda ner Beta 3 för Windows](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.3/Studieportalen-Windows-x64.zip)
+- [⬇ Ladda ner Beta 3 för Mac – Apple Silicon](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.3/Studieportalen-macOS-arm64.zip)
+- [⬇ Ladda ner Beta 3 för Mac – Intel](https://github.com/maackaan/studieportalen/releases/download/v0.1.0-beta.3/Studieportalen-macOS-x64.zip)
 
-**Offentlig förhandsversion.** På [versionssidan](https://github.com/maackaan/studieportalen/releases) väljer du `Studieportalen-Windows-x64.zip`, inte GitHubs automatiska “Source code”-filer. Betan är osignerad och kan därför ge en Windows-varning eller blockeras på vissa datorer; se [betachecklistan](BETA_CHECKLIST.md).
+**Offentlig förhandsversion.** På [versionssidan](https://github.com/maackaan/studieportalen/releases) väljer du paketet för din dator, inte GitHubs automatiska “Source code”-filer. Betan är osignerad och kan därför ge en säkerhetsvarning eller blockeras på vissa datorer; se [betachecklistan](BETA_CHECKLIST.md).
 
 ## För vanliga användare
 
@@ -16,7 +18,9 @@ Den färdiga Windows-versionen är tänkt att fungera som ett vanligt program:
 
 VS Code, Python och webbläsartillägg behövs inte. Programmet innehåller sin egen Python-miljö och öppnas i ett eget skrivbordsfönster. Windows använder WebView2 för fönstret; det finns redan på Windows 11 och på den stora majoriteten av uppdaterade Windows 10-datorer.
 
-Den nedladdade appen startar helt tom. Kurser, planering, anteckningar och filer skapas först av användaren och sparas i den personens lokala Windows-profil under `%LOCALAPPDATA%\Studieportalen`. De byggs aldrig in i den nedladdningsbara programfilen och skickas inte till GitHub.
+På en Mac väljer du `arm64` om datorn har Apple Silicon (M1 eller senare) och `x64` om den har en Intel-processor. Packa upp ZIP-filen och öppna `Studieportalen.app`. Mac-versionen är ännu inte signerad eller notariserad och kan därför kräva att användaren uttryckligen väljer att öppna den i macOS säkerhetsinställningar.
+
+Den nedladdade appen startar helt tom. Kurser, planering, anteckningar och filer skapas först av användaren och sparas lokalt under `%LOCALAPPDATA%\Studieportalen` på Windows eller `~/Library/Application Support/Studieportalen` på Mac. De byggs aldrig in i det nedladdningsbara programmet och skickas inte till GitHub.
 
 Läs den korta [integritetsbeskrivningen](PRIVACY.md) för exakt vad som lagras lokalt och vilka nätverksanrop som kan göras.
 
@@ -126,7 +130,7 @@ Ingen projektlicens har lagts till automatiskt. Källkoden är synlig, men proje
 
 Automatiska tester är **kodvalidering**: de kontrollerar funktioner, datum, tom profil och säkerhetskopior. **Kodsignering** visar vem som har publicerat Windows-filen och att den inte har ändrats. En SHA-256-kontrollsumma är inte en digital signatur. Dessa kontroller kompletterar varandra men garanterar inte att en app är helt felfri.
 
-Nu körs funktionstester på både Windows och Linux samt isolerade gränssnittstester vid 360, 768 och 1280 pixlar. Gränssnittstestet använder en egen tom webbläsarprofil och påverkar inte användarens uppgifter. För utvecklare:
+Nu körs funktionstester på både Windows och Linux samt isolerade gränssnittstester vid 360, 520, 768 och 1280 pixlar. Gränssnittstestet använder en egen tom webbläsarprofil och påverkar inte användarens uppgifter. För utvecklare:
 
 ```text
 npm install
