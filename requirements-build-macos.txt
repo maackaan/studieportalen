@@ -1,6 +1,6 @@
 # Separate native macOS test-build environment. PyObjC dependencies are resolved
 # by pywebview for the runner architecture and will be locked after the first
 # verified build on both Apple Silicon and Intel.
-py2app==0.29.10
+py2app==0.28.10
 pywebview==6.2.1
 Pillow==12.3.0
