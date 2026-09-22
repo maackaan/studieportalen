@@ -64,6 +64,15 @@ const key = 'studieportalen-data-v2';
     await page.locator('#dateName').fill('Allmän studiedag');
     await page.locator('#dateValue').fill('2026-12-15T10:00');
     await page.screenshot({path:'build/ui-event-form.png',animations:'disabled'});
+    for (const width of [520,360]) {
+      await page.setViewportSize({width,height:820});
+      assert.ok(await page.locator('#addDialog').evaluate((dialog, viewportWidth) => {
+        const rect = dialog.getBoundingClientRect();
+        return rect.left >= 0 && rect.right <= viewportWidth && rect.height <= innerHeight;
+      }, width), `Event form overflows at ${width}px`);
+      await page.screenshot({path:`build/ui-event-form-${width}.png`,animations:'disabled'});
+    }
+    await page.setViewportSize({width:1280,height:820});
     await page.locator('#addForm button[type=submit]').click();
     assert.equal(await page.evaluate(() => state.events[0].courseId), '');
     assert.equal(await page.evaluate(() => (new Date(state.events[0].endDate) - new Date(state.events[0].date)) / 60000), 120);
@@ -78,6 +87,15 @@ const key = 'studieportalen-data-v2';
     assert.match(await page.locator('#eventPreviewContent').textContent(), /10:00–12:00/);
     assert.match(await page.locator('#eventPreviewContent').textContent(), /2 timmar/);
     await page.screenshot({path:'build/ui-event-preview.png',animations:'disabled'});
+    for (const width of [520,360]) {
+      await page.setViewportSize({width,height:820});
+      assert.ok(await page.locator('#eventPreviewDialog').evaluate((dialog, viewportWidth) => {
+        const rect = dialog.getBoundingClientRect();
+        return rect.left >= 0 && rect.right <= viewportWidth && rect.height <= innerHeight;
+      }, width), `Event preview overflows at ${width}px`);
+      await page.screenshot({path:`build/ui-event-preview-${width}.png`,animations:'disabled'});
+    }
+    await page.setViewportSize({width:1280,height:820});
     await page.locator('#eventPreviewToggle').click();
     assert.equal(await page.evaluate(() => state.events[0].completed), true);
     assert.match(await page.locator('#eventPreviewToggle').textContent(), /att göra/);
@@ -184,8 +202,49 @@ const key = 'studieportalen-data-v2';
     await page.getByRole('button',{name:'Ångra',exact:true}).click();
     assert.equal(await page.evaluate(() => state.courses.length),1);
     assert.equal(await page.evaluate(async () => (await getFile(state.resources.find(x=>x.name === 'Testfil').id)).text()),'lokalt filinnehåll');
+
+    for (const view of ['overview','courses','resources']) {
+      await page.evaluate(viewName => switchView(viewName), view);
+      for (const width of [1280,768,520,360]) {
+        await page.setViewportSize({width,height:820});
+        await page.evaluate(() => scrollTo({top:0,left:0,behavior:'instant'}));
+        const overflow = await page.evaluate(() => ({
+          pageWidth: document.documentElement.scrollWidth,
+          viewportWidth: innerWidth,
+          offenders: [...document.querySelectorAll('body *')].filter((element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.width > 0 && (rect.right > innerWidth + 1 || rect.left < -1);
+          }).slice(0, 12).map((element) => ({ tag: element.tagName, id: element.id, classes: element.className, rect: element.getBoundingClientRect().toJSON() })),
+        }));
+        assert.ok(overflow.pageWidth <= overflow.viewportWidth,`${view} overflows at ${width}px: ${JSON.stringify(overflow.offenders)}`);
+        if (view === 'overview') {
+          assert.ok(await page.locator('#upcomingDateList .recent-item').count() > 0, 'Overview events are missing');
+          assert.ok(await page.locator('#upcomingDateList .recent-item').evaluateAll((items) => items.every((item) => {
+            const content = item.querySelector(':scope > div:not(.item-actions)');
+            const actions = item.querySelector('.item-actions');
+            if (!content || !actions) return false;
+            const itemRect = item.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            const actionRect = actions.getBoundingClientRect();
+            const contained = contentRect.right <= itemRect.right + 1 && actionRect.right <= itemRect.right + 1;
+            const separated = actionRect.top >= contentRect.bottom - 1 || actionRect.left >= contentRect.right - 1;
+            return contained && separated;
+          })), `Overview event text overlaps actions at ${width}px`);
+        }
+        if (view === 'resources' && width <= 600) {
+          assert.equal(await page.locator('#resourceTableBody .table-actions').count(), 3);
+          assert.ok(await page.locator('#resourceTableBody .table-actions').evaluateAll((actions) => actions.every((element) => {
+            const rowRect = element.closest('tr').getBoundingClientRect();
+            const actionRect = element.getBoundingClientRect();
+            return actionRect.width > 0 && actionRect.right <= rowRect.right + 1;
+          })), `Resource actions are clipped at ${width}px`);
+        }
+        await page.screenshot({path:`build/ui-${view}-${width}.png`,fullPage:true,animations:'disabled'});
+      }
+    }
+
     await page.evaluate(() => openCourse(state.courses[0].id));
-    for (const width of [1280,768,360]) {
+    for (const width of [1280,768,520,360]) {
       await page.setViewportSize({width,height:820});
       await page.evaluate(() => scrollTo({top:0,left:0,behavior:'instant'}));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`Page overflows at ${width}px`);
@@ -205,7 +264,7 @@ const key = 'studieportalen-data-v2';
     }
     await page.evaluate(() => switchView('calendar'));
     await page.evaluate(() => { calendarWeekStart = startOfWeek(new Date(2026, 9, 14)); renderCalendar(); });
-    for (const width of [1280,768,360]) {
+    for (const width of [1280,768,520,360]) {
       await page.setViewportSize({width,height:820});
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`Calendar overflows at ${width}px`);
       assert.ok(await page.locator('#calendarWeek').isVisible(),`Calendar week is hidden at ${width}px`);

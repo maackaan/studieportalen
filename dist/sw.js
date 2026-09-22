@@ -1,5 +1,5 @@
-const CACHE = 'studieportalen-shell-v22';
-const APP_SHELL = ['./', './index.html', './styles.css?v=22', './calendar-import.js?v=3', './app.js?v=22', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'studieportalen-shell-v23';
+const APP_SHELL = ['./', './index.html', './styles.css?v=23', './calendar-import.js?v=3', './app.js?v=23', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));

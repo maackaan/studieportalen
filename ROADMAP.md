@@ -84,6 +84,7 @@
    - Deadlines, föreläsningar, seminarier, lektioner, läsning, laborationer och tentamina placeras som tidsblock i ett kompakt schema från 08:00. Användaren väljer start och längd i stället för att räkna fram en sluttid.
    - Deadline föreslås bli en timme, undervisning två timmar och tentamen fyra timmar; fem timmar och andra vanliga längder finns som direkta val. Importerade avvikande längder bevaras.
    - Ett tryck på ett block öppnar en snabb informationsruta med datum, tid, kurs, anteckning, status och genväg till redigering. Smala skärmar har en egen horisontell schemarullning utan att hela sidan blir bred.
+   - Översiktens planeringsposter och resurslistan växlar till rymligare mobilrader så långa kursnamn, tider och åtgärdsknappar inte överlappar eller klipps bort.
    - `.ics`-importen finns på kalendersidan med val av kurs eller `Allmänt`, förhandsgranskning, start-/sluttid och dubblettskydd.
    - Senare: sida-vid-sida-layout för samtidiga block, månadsvy samt uttryckligen angivna publika TimeEdit-prenumerationslänkar med dubblett-, ändrings- och avbokningshantering. Ingen generell proxy eller inloggningsskrapning.
 

@@ -20,7 +20,7 @@
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-22: 19 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning, typanpassade längder, informationsrutan och veckokalendern vid 360, 768 och 1280 pixlar. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
+Status 2026-09-22: 19 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning, typanpassade längder, informationsrutan och samtliga huvudvyer vid 360, 520, 768 och 1280 pixlar. De kontrollerar dessutom att händelsetext inte överlappar åtgärder och att resursknappar inte klipps bort. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
 
 Paketet är fortfarande osignerat (`NotSigned`). Testaren fick en Windows-varning men kunde välja att köra appen; andra datorer kan blockera den hårdare. Betan är därför inte verifierad för friktionsfri offentlig Windows-distribution.
 

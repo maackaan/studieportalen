@@ -309,7 +309,7 @@ function dateItemMarkup(item) {
   const timeRange = `${time}–${formatTime(calendarEventEnd(item))}`;
   const label = eventTypeLabel(item.type);
   const context = course ? `<button type="button" class="event-course-link" data-open-event-course="${course.id}">${escapeHtml(course.name)}</button>` : '<span>Allmänt</span>';
-  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span>· ${timeRange}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
+  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span class="event-time">${timeRange}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
 }
 
 function startOfWeek(value) {
@@ -917,7 +917,7 @@ function toggleEvent(id) {
   showToast(item.completed ? 'Markerad som klar' : 'Flyttad tillbaka till att göra');
 }
 
-function sidebarIsModal() { return matchMedia('(max-width: 760px)').matches; }
+function sidebarIsModal() { return matchMedia('(max-width: 820px)').matches; }
 
 function syncSidebarAccessibility() {
   const hidden = sidebarIsModal() && !els.sidebar.classList.contains('open');
