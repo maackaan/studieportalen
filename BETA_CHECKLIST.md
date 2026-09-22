@@ -13,18 +13,18 @@
 - Fristående datum och resurser, resurstypen Information och sparad kursordning.
 - Redigering, arkivering, återställning och ångra borttagning.
 - Fristående Windows-bygge och automatiserat GitHub Release-utkast.
-- Manuellt `py2app`-baserat macOS-testbygge för Apple Silicon och Intel; riktig Mac-acceptans återstår före en Mac-release.
+- Godkänt manuellt `py2app`-baserat macOS-testbygge och automatiskt starttest för både Apple Silicon och Intel; riktig Mac-acceptans återstår före en Mac-release.
 - Automatisk kontroll av Python, JavaScript, kalenderimport, tom profil och offline-cache.
 - SHA-256-kontrollsumma bredvid varje Windows-paket.
 - Exakt låsta byggberoenden, ren sårbarhetskontroll och tredjepartslicenser i ZIP-paketet.
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-22: 19 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning, typanpassade längder, informationsrutan och samtliga huvudvyer vid 360, 520, 768 och 1280 pixlar. De kontrollerar dessutom att händelsetext inte överlappar åtgärder och att resursknappar inte klipps bort. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
+Status 2026-09-22: 20 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning, typanpassade längder, informationsrutan och samtliga huvudvyer vid 360, 520, 768 och 1280 pixlar. De kontrollerar dessutom att händelsetext inte överlappar åtgärder och att resursknappar inte klipps bort. GitHub Actions har godkänt den senaste testmatrisen, byggt och självtestat Windows-paketet i en ren byggmiljö samt byggt, starttestat och paketerat macOS-versionerna för både Apple Silicon och Intel. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`; ingen Beta 3-tagg eller release har skapats ännu. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
 
 Paketet är fortfarande osignerat (`NotSigned`). Testaren fick en Windows-varning men kunde välja att köra appen; andra datorer kan blockera den hårdare. Betan är därför inte verifierad för friktionsfri offentlig Windows-distribution.
 
-Gränssnittstesterna omfattar tom profil, kursers hela livscykel, anteckning, fil, filstorleksgräns, kalenderurval, dubbletter, slutförd uppgift, borttagning/ångra, tre fönsterbredder, tangentbordsmeny, omladdning, export/återställning, skadad profil, återställningsfel vid full lagring, säkerhetshuvuden och offline-omstart. HTML-bilagor förhandsvisas i en isolerad ram utan skripträttigheter.
+Gränssnittstesterna omfattar tom profil, kursers hela livscykel, anteckning, fil, filstorleksgräns, kalenderurval, dubbletter, slutförd uppgift, borttagning/ångra, fyra fönsterbredder, tangentbordsmeny, omladdning, export/återställning, skadad profil, återställningsfel vid full lagring, säkerhetshuvuden och offline-omstart. HTML-bilagor förhandsvisas i en isolerad ram utan skripträttigheter.
 
 1. ~~Skapa GitHub-förrådet och bestäm dess slutliga adress.~~ Klart: offentligt `maackaan/studieportalen`.
 2. ~~Bekräfta den förberedda nedladdningsadressen `maackaan/studieportalen` i README.~~ Klart.
