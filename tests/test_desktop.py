@@ -29,7 +29,9 @@ class DesktopLauncherTests(unittest.TestCase):
 
     def test_storage_directory_is_user_specific(self):
         with tempfile.TemporaryDirectory() as directory:
-            with patch.dict("os.environ", {"XDG_DATA_HOME": directory, "LOCALAPPDATA": directory}):
+            with patch.object(desktop.sys, "platform", "linux"), patch.dict(
+                "os.environ", {"XDG_DATA_HOME": directory, "LOCALAPPDATA": directory}
+            ):
                 path = desktop.storage_directory()
             self.assertEqual(path, Path(directory) / "Studieportalen" / "WebView")
             self.assertTrue(path.is_dir())
