@@ -37,6 +37,7 @@ const MAX_RESOURCE_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_BACKUP_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_BACKUP_RAW_FILE_BYTES = 70 * 1024 * 1024;
 const FILE_RESOURCE_TYPES = ['exam', 'image', 'info'];
+const DEFAULT_EVENT_DURATION_MINUTES = { deadline: 60, exam: 240, lecture: 120, seminar: 120, lesson: 120, reading: 60, lab: 120 };
 const sampleData = {
   courses: [],
   resources: [],
@@ -59,6 +60,7 @@ let toastTimer;
 let pendingUndo = null;
 let deferredInstallPrompt = null;
 let calendarImportCourseId = null;
+let previewedEventId = null;
 
 const els = {
   sidebar: document.querySelector('#sidebar'),
@@ -108,7 +110,7 @@ const els = {
   dateName: document.querySelector('#dateName'),
   dateCourse: document.querySelector('#dateCourse'),
   dateValue: document.querySelector('#dateValue'),
-  dateEndValue: document.querySelector('#dateEndValue'),
+  dateDuration: document.querySelector('#dateDuration'),
   dateNote: document.querySelector('#dateNote'),
   dialogKicker: document.querySelector('#dialogKicker'),
   dialogTitle: document.querySelector('#dialogTitle'),
@@ -117,6 +119,13 @@ const els = {
   previewDialog: document.querySelector('#previewDialog'),
   previewTitle: document.querySelector('#previewTitle'),
   previewBody: document.querySelector('#previewBody'),
+  eventPreviewDialog: document.querySelector('#eventPreviewDialog'),
+  eventPreviewIcon: document.querySelector('#eventPreviewIcon'),
+  eventPreviewType: document.querySelector('#eventPreviewType'),
+  eventPreviewTitle: document.querySelector('#eventPreviewTitle'),
+  eventPreviewContent: document.querySelector('#eventPreviewContent'),
+  eventPreviewToggle: document.querySelector('#eventPreviewToggle'),
+  eventPreviewEdit: document.querySelector('#eventPreviewEdit'),
   exportButton: document.querySelector('#exportButton'),
   importButton: document.querySelector('#importButton'),
   importInput: document.querySelector('#importInput'),
@@ -297,8 +306,7 @@ function dateItemMarkup(item) {
   const course = state.courses.find((courseItem) => courseItem.id === item.courseId);
   const month = new Intl.DateTimeFormat('sv-SE', { month: 'short' }).format(date).replace('.', '');
   const time = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' }).format(date);
-  const explicitEnd = item.endDate && new Date(item.endDate) > date ? new Date(item.endDate) : null;
-  const timeRange = explicitEnd ? `${time}–${formatTime(explicitEnd)}` : time;
+  const timeRange = `${time}–${formatTime(calendarEventEnd(item))}`;
   const label = eventTypeLabel(item.type);
   const context = course ? `<button type="button" class="event-course-link" data-open-event-course="${course.id}">${escapeHtml(course.name)}</button>` : '<span>Allmänt</span>';
   return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span>· ${timeRange}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
@@ -325,12 +333,23 @@ function formatTime(value) {
   return new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' }).format(value);
 }
 
-function calendarEventEnd(item) {
+function eventDurationMinutes(item) {
   const start = new Date(item.date);
   const savedEnd = item.endDate ? new Date(item.endDate) : null;
-  if (savedEnd && !Number.isNaN(savedEnd.getTime()) && savedEnd > start) return savedEnd;
-  const defaultHours = { deadline: 0.75, reading: 1, exam: 3, lecture: 2, seminar: 2, lesson: 2, lab: 2 }[item.type] || 1;
-  return new Date(start.getTime() + defaultHours * 60 * 60 * 1000);
+  if (savedEnd && !Number.isNaN(savedEnd.getTime()) && savedEnd > start) return Math.max(1, Math.round((savedEnd - start) / 60000));
+  return DEFAULT_EVENT_DURATION_MINUTES[item.type] || 60;
+}
+
+function calendarEventEnd(item) {
+  const start = new Date(item.date);
+  return new Date(start.getTime() + eventDurationMinutes(item) * 60000);
+}
+
+function formatDuration(minutes) {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours} tim ${remainder} min` : `${hours} ${hours === 1 ? 'timme' : 'timmar'}`;
 }
 
 function isoWeekNumber(value) {
@@ -358,7 +377,7 @@ function renderCalendar() {
       return date >= calendarWeekStart && date < weekEnd;
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  const startHour = 6;
+  const startHour = 8;
   const endHour = 24;
   const slotsPerHour = 4;
   const slotCount = (endHour - startHour) * slotsPerHour;
@@ -379,7 +398,7 @@ function renderCalendar() {
       const startSlot = Math.max(0, Math.min(slotCount - 1, Math.floor((startMinutes - startHour * 60) / 15)));
       const durationSlots = Math.max(2, Math.min(slotCount - startSlot, Math.ceil((endMinutes - Math.max(startMinutes, startHour * 60)) / 15)));
       const time = `${formatTime(start)}–${formatTime(end)}`;
-      return `<button type="button" class="calendar-event ${item.type} calendar-start-${startSlot} calendar-span-${durationSlots}${item.completed ? ' completed' : ''}" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}, ${time}"><strong>${escapeHtml(item.name)}</strong><span>${time}</span><small>${escapeHtml(course?.code || course?.name || 'Allmänt')}</small></button>`;
+      return `<button type="button" class="calendar-event ${item.type} calendar-start-${startSlot} calendar-span-${durationSlots}${item.completed ? ' completed' : ''}" data-preview-event="${item.id}" aria-label="Visa information om ${escapeHtml(item.name)}, ${time}"><strong>${escapeHtml(item.name)}</strong><span>${time}</span><small>${escapeHtml(course?.code || course?.name || 'Allmänt')}</small></button>`;
     }).join('');
     const currentMinute = now.getHours() * 60 + now.getMinutes();
     const currentLine = sameLocalDay(day, now) && currentMinute >= startHour * 60 && currentMinute <= endHour * 60
@@ -481,6 +500,13 @@ function openDialog(mode = 'resource', courseId = '') {
   els.formError.textContent = '';
   els.lookupStatus.textContent = '';
   els.lookupStatus.className = 'lookup-status';
+  if (mode === 'date') {
+    const start = new Date();
+    start.setSeconds(0, 0);
+    start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30);
+    els.dateValue.value = toLocalDateTimeValue(start);
+    setDurationValue(DEFAULT_EVENT_DURATION_MINUTES[els.dateType.value] || 60);
+  }
   if (courseId) {
     els.resourceCourse.value = courseId;
     els.dateCourse.value = courseId;
@@ -545,11 +571,21 @@ function toLocalDateTimeValue(value) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
-function suggestDateEnd() {
-  if (els.dateEndValue.value || !els.dateValue.value || !['lecture', 'seminar', 'lesson', 'lab'].includes(els.dateType.value)) return;
-  const start = new Date(els.dateValue.value);
-  if (Number.isNaN(start.getTime())) return;
-  els.dateEndValue.value = toLocalDateTimeValue(new Date(start.getTime() + 2 * 60 * 60 * 1000));
+function setDurationValue(minutes) {
+  els.dateDuration.querySelector('[data-custom-duration]')?.remove();
+  const value = String(Math.max(1, Math.round(minutes)));
+  if (![...els.dateDuration.options].some((option) => option.value === value)) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.dataset.customDuration = 'true';
+    option.textContent = `${formatDuration(Number(value))} · importerad tid`;
+    els.dateDuration.append(option);
+  }
+  els.dateDuration.value = value;
+}
+
+function useDefaultDuration() {
+  setDurationValue(DEFAULT_EVENT_DURATION_MINUTES[els.dateType.value] || 60);
 }
 
 function editEvent(eventId) {
@@ -564,7 +600,7 @@ function editEvent(eventId) {
   els.dateName.value = item.name || '';
   els.dateCourse.value = item.courseId || '';
   els.dateValue.value = toLocalDateTimeValue(item.date);
-  els.dateEndValue.value = item.endDate ? toLocalDateTimeValue(item.endDate) : '';
+  setDurationValue(eventDurationMinutes(item));
   els.dateNote.value = item.note || '';
   setTimeout(() => els.dateName.focus(), 40);
 }
@@ -596,10 +632,12 @@ async function handleSubmit(event) {
     if (!name) return showFormError('Skriv ett namn på datumet.');
     if (!els.dateValue.value) return showFormError('Välj datum och tid.');
     const startDate = new Date(els.dateValue.value);
-    const endDate = els.dateEndValue.value ? new Date(els.dateEndValue.value) : null;
-    if (endDate && endDate <= startDate) return showFormError('Sluttiden måste vara efter starttiden.');
+    if (Number.isNaN(startDate.getTime())) return showFormError('Välj ett giltigt startdatum.');
+    const durationMinutes = Number(els.dateDuration.value);
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 10080) return showFormError('Välj en giltig längd.');
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
     const existing = editingEventId ? state.events.find((item) => item.id === editingEventId) : null;
-    const planItem = { id: existing?.id || uid('event'), type: els.dateType.value, name, courseId: els.dateCourse.value, date: startDate.toISOString(), endDate: endDate?.toISOString() || '', note: els.dateNote.value.trim(), completed: existing?.completed || false, createdAt: existing?.createdAt || new Date().toISOString() };
+    const planItem = { id: existing?.id || uid('event'), type: els.dateType.value, name, courseId: els.dateCourse.value, date: startDate.toISOString(), endDate: endDate.toISOString(), note: els.dateNote.value.trim(), completed: existing?.completed || false, createdAt: existing?.createdAt || new Date().toISOString() };
     if (editingEventId && !existing) return showFormError('Planeringsposten kunde inte hittas.');
     if (existing) Object.assign(existing, planItem);
     else state.events.push(planItem);
@@ -779,6 +817,31 @@ function closeResourcePreview() {
   currentPreviewUrl = '';
 }
 
+function showEventPreview(id) {
+  const item = state.events.find((event) => event.id === id);
+  if (!item) return;
+  const start = new Date(item.date);
+  const end = calendarEventEnd(item);
+  const course = state.courses.find((candidate) => candidate.id === item.courseId);
+  const dateText = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(start);
+  const duration = eventDurationMinutes(item);
+  previewedEventId = item.id;
+  els.eventPreviewIcon.className = `event-preview-icon ${item.type}`;
+  els.eventPreviewType.textContent = eventTypeLabel(item.type).toLocaleUpperCase('sv-SE');
+  els.eventPreviewTitle.textContent = item.name;
+  els.eventPreviewContent.innerHTML = `<div class="event-preview-row">${svg('calendar')}<div><strong>${escapeHtml(dateText)}</strong><span>${formatTime(start)}–${formatTime(end)} · ${escapeHtml(formatDuration(duration))}</span></div></div>
+    <div class="event-preview-row">${svg('book')}<div><strong>Kurs</strong>${course ? `<button type="button" class="event-preview-course" data-open-event-course="${course.id}">${escapeHtml(course.name)}${course.code ? ` · ${escapeHtml(course.code)}` : ''}</button>` : '<span>Allmänt · ingen kurs</span>'}</div></div>
+    ${item.note ? `<div class="event-preview-row event-preview-note">${svg('info')}<div><strong>Information</strong><p>${escapeHtml(item.note)}</p></div></div>` : ''}
+    <div class="event-preview-status${item.completed ? ' completed' : ''}">${item.completed ? 'Markerad som klar' : 'Planerad'}</div>`;
+  els.eventPreviewToggle.textContent = item.completed ? 'Markera som att göra' : 'Markera som klar';
+  if (!els.eventPreviewDialog.open) els.eventPreviewDialog.showModal();
+}
+
+function closeEventPreview() {
+  if (els.eventPreviewDialog.open) els.eventPreviewDialog.close();
+  previewedEventId = null;
+}
+
 async function deleteResource(id) {
   const resource = state.resources.find((item) => item.id === id);
   if (!resource || !confirm(`Ta bort “${resource.name}”?`)) return;
@@ -904,8 +967,7 @@ window.addEventListener('resize', handleViewportChange);
 els.courseSearch.addEventListener('input', renderCourses);
 els.resourceSearch.addEventListener('input', renderResources);
 els.resourceType.addEventListener('change', updateResourceFields);
-els.dateType.addEventListener('change', suggestDateEnd);
-els.dateValue.addEventListener('change', suggestDateEnd);
+els.dateType.addEventListener('change', useDefaultDuration);
 els.searchCourseButton.addEventListener('click', searchCourse);
 els.courseCodeSearch.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); searchCourse(); } });
 els.form.addEventListener('submit', handleSubmit);
@@ -915,10 +977,32 @@ document.querySelectorAll('.mode-option').forEach((button) => button.addEventLis
   editingEventId = null;
   els.dialogKicker.textContent = 'LÄGG TILL';
   setAddMode(button.dataset.addMode);
+  if (button.dataset.addMode === 'date') {
+    if (!els.dateValue.value) {
+      const start = new Date();
+      start.setSeconds(0, 0);
+      start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30);
+      els.dateValue.value = toLocalDateTimeValue(start);
+    }
+    useDefaultDuration();
+  }
 }));
 document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => els.dialog.close()));
 document.querySelectorAll('[data-close-preview]').forEach((button) => button.addEventListener('click', closeResourcePreview));
 els.previewDialog.addEventListener('cancel', (event) => { event.preventDefault(); closeResourcePreview(); });
+document.querySelectorAll('[data-close-event-preview]').forEach((button) => button.addEventListener('click', closeEventPreview));
+els.eventPreviewDialog.addEventListener('cancel', (event) => { event.preventDefault(); closeEventPreview(); });
+els.eventPreviewEdit.addEventListener('click', () => {
+  const id = previewedEventId;
+  closeEventPreview();
+  if (id) editEvent(id);
+});
+els.eventPreviewToggle.addEventListener('click', () => {
+  const id = previewedEventId;
+  if (!id) return;
+  toggleEvent(id);
+  showEventPreview(id);
+});
 document.querySelectorAll('#resourceFilters .filter-pill').forEach((button) => button.addEventListener('click', () => {
   currentResourceFilter = button.dataset.filter;
   document.querySelectorAll('#resourceFilters .filter-pill').forEach((pill) => pill.classList.toggle('active', pill === button));
@@ -975,6 +1059,7 @@ document.addEventListener('click', (event) => {
   const moveCourseTarget = event.target.closest('[data-move-course]');
   const deleteEventTarget = event.target.closest('[data-delete-event]');
   const editEventTarget = event.target.closest('[data-edit-event]');
+  const previewEventTarget = event.target.closest('[data-preview-event]');
   const toggleEventTarget = event.target.closest('[data-toggle-event]');
   const openEventCourseTarget = event.target.closest('[data-open-event-course]');
   const copyCourseCodeTarget = event.target.closest('[data-copy-course-code]');
@@ -994,8 +1079,9 @@ document.addEventListener('click', (event) => {
   else if (archiveCourseTarget) toggleCourseArchive(archiveCourseTarget.dataset.toggleCourseArchive);
   else if (deleteEventTarget) deleteEvent(deleteEventTarget.dataset.deleteEvent);
   else if (editEventTarget) editEvent(editEventTarget.dataset.editEvent);
+  else if (previewEventTarget) showEventPreview(previewEventTarget.dataset.previewEvent);
   else if (toggleEventTarget) toggleEvent(toggleEventTarget.dataset.toggleEvent);
-  else if (openEventCourseTarget) openCourse(openEventCourseTarget.dataset.openEventCourse);
+  else if (openEventCourseTarget) { closeEventPreview(); openCourse(openEventCourseTarget.dataset.openEventCourse); }
   else if (copyCourseCodeTarget) copyCourseCode(copyCourseCodeTarget.dataset.copyCourseCode);
 });
 

@@ -9,7 +9,7 @@
 - Separat LiU-kursinformation, offentlig IDA-kurshemsida och TimeEdit-länk.
 - Genvägar till Canvas och officiell schemasökning för KTH, Chalmers och Lund.
 - Lokal `.ics`-import med förhandsgranskning, tentamensklassning och dubblettskydd.
-- Samlad veckokalender måndag–söndag med tidsblock, veckonavigering, dagens markering, aktuell tidslinje och `.ics`-import till valfri kurs eller `Allmänt`.
+- Samlad veckokalender måndag–söndag från 08:00 med tidsblock, veckonavigering, dagens markering, aktuell tidslinje, snabb information vid tryck och `.ics`-import till valfri kurs eller `Allmänt`.
 - Fristående datum och resurser, resurstypen Information och sparad kursordning.
 - Redigering, arkivering, återställning och ångra borttagning.
 - Fristående Windows-bygge och automatiserat GitHub Release-utkast.
@@ -20,7 +20,7 @@
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-22: 19 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning och veckokalendern vid 360, 768 och 1280 pixlar. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
+Status 2026-09-22: 19 Python-tester, 6 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning, typanpassade längder, informationsrutan och veckokalendern vid 360, 768 och 1280 pixlar. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
 
 Paketet är fortfarande osignerat (`NotSigned`). Testaren fick en Windows-varning men kunde välja att köra appen; andra datorer kan blockera den hårdare. Betan är därför inte verifierad för friktionsfri offentlig Windows-distribution.
 
@@ -49,7 +49,9 @@ Se [SIGNING.md](SIGNING.md) för signeringsalternativ och loggbevis. Liveuppslag
 - Lägg till anteckning, länk, bild och gammal tenta.
 - Lägg till ett allmänt datum och en allmän Information-resurs med fil eller länk.
 - Lägg till minst fem kurser, flytta en kurs och bekräfta samma ordning på kurssidan och översikten.
-- Öppna kalendersidan, bläddra mellan veckor och kontrollera dagens markering samt tidsblockens start och slut.
+- Öppna kalendersidan, bläddra mellan veckor och kontrollera dagens markering, 08:00-start samt tidsblockens start och längd.
+- Skapa en deadline, undervisning och tentamen och kontrollera standardlängderna 1, 2 respektive 4 timmar samt alternativet 5 timmar.
+- Tryck på ett kalenderblock och kontrollera information, status och genvägen till redigering.
 - Importera en `.ics`-fil med start-/sluttider både till en kurs och till `Allmänt`.
 - Importera en `.ics`-fil två gånger och bekräfta att den andra importen inte skapar dubbletter.
 - Exportera en säkerhetskopia, stäng appen, öppna igen och kontrollera att allt finns kvar.

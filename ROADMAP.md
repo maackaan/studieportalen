@@ -81,8 +81,9 @@
 
 9. **Samlad kalendersida – veckovy genomförd lokalt**
    - `Kalender` visar måndag–söndag i sju kolumner med veckonavigering, veckonummer, dagens markering och aktuell tidslinje.
-   - Deadlines, föreläsningar, seminarier, lektioner, läsning, laborationer och tentamina placeras som tidsblock. Nya schemapass föreslås bli två timmar och kan få valfri sluttid.
-   - Poster kan läggas till och redigeras direkt; ett tryck på ett block öppnar redigeringen. Smala skärmar har en egen horisontell schemarullning utan att hela sidan blir bred.
+   - Deadlines, föreläsningar, seminarier, lektioner, läsning, laborationer och tentamina placeras som tidsblock i ett kompakt schema från 08:00. Användaren väljer start och längd i stället för att räkna fram en sluttid.
+   - Deadline föreslås bli en timme, undervisning två timmar och tentamen fyra timmar; fem timmar och andra vanliga längder finns som direkta val. Importerade avvikande längder bevaras.
+   - Ett tryck på ett block öppnar en snabb informationsruta med datum, tid, kurs, anteckning, status och genväg till redigering. Smala skärmar har en egen horisontell schemarullning utan att hela sidan blir bred.
    - `.ics`-importen finns på kalendersidan med val av kurs eller `Allmänt`, förhandsgranskning, start-/sluttid och dubblettskydd.
    - Senare: sida-vid-sida-layout för samtidiga block, månadsvy samt uttryckligen angivna publika TimeEdit-prenumerationslänkar med dubblett-, ändrings- och avbokningshantering. Ingen generell proxy eller inloggningsskrapning.
 
