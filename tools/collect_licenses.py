@@ -60,6 +60,10 @@ def license_texts(distribution: metadata.Distribution, name: str) -> list[tuple[
                 (ROOT / "licenses" / "proxy_tools-LICENSE.txt").read_text(encoding="utf-8").strip(),
             )
         ]
+    if name.startswith("pyobjc-framework-"):
+        # A few PyObjC framework wheels omit their duplicate license file.
+        # They are released as part of PyObjC and use pyobjc-core's license.
+        return license_texts(metadata.distribution("pyobjc-core"), "pyobjc-core")
     raise RuntimeError(f"Ingen licenstext hittades för {name}.")
 
 
