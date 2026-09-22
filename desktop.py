@@ -22,7 +22,9 @@ URL = f"http://{HOST}:{PORT}"
 
 def storage_directory() -> Path:
     """Returnera en stabil, användarspecifik mapp för WebView-profilen."""
-    if os.name == "nt":
+    if sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    elif os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     else:
         base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
@@ -97,6 +99,13 @@ def show_startup_error(message: str) -> None:
     if os.name == "nt":
         import ctypes
         ctypes.windll.user32.MessageBoxW(None, message, "Studieportalen kunde inte starta", 0x10)
+    elif sys.platform == "darwin":
+        from AppKit import NSAlert, NSAlertStyleCritical
+        alert = NSAlert.alloc().init()
+        alert.setAlertStyle_(NSAlertStyleCritical)
+        alert.setMessageText_("Studieportalen kunde inte starta")
+        alert.setInformativeText_(message)
+        alert.runModal()
     else:
         print(f"Studieportalen kunde inte starta: {message}", file=sys.stderr)
 

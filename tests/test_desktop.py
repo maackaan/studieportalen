@@ -34,6 +34,13 @@ class DesktopLauncherTests(unittest.TestCase):
             self.assertEqual(path, Path(directory) / "Studieportalen" / "WebView")
             self.assertTrue(path.is_dir())
 
+    def test_macos_storage_uses_application_support(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(desktop.sys, "platform", "darwin"), patch.object(Path, "home", return_value=Path(directory)):
+                path = desktop.storage_directory()
+            self.assertEqual(path, Path(directory) / "Library" / "Application Support" / "Studieportalen" / "WebView")
+            self.assertTrue(path.is_dir())
+
     def test_local_server_uses_loopback(self):
         server, thread = desktop.start_local_server(port=0)
         try:

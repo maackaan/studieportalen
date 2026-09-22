@@ -1,0 +1,6 @@
+# Separate native macOS test-build environment. PyObjC dependencies are resolved
+# by pywebview for the runner architecture and will be locked after the first
+# verified build on both Apple Silicon and Intel.
+pyinstaller==6.22.2
+pywebview==6.2.1
+Pillow==12.3.0

@@ -8,6 +8,9 @@
 4. **För in kalenderdata** – `.ics` först, därefter publika TimeEdit-länkar och lokala påminnelser.
 5. **Stabilisera datalagret** – gemensamt lagringsgränssnitt, SQLite och testad migrering.
 6. **Gör appen enkel att sprida** – den portabla Windows-byggnaden är förberedd; därefter licensbeslut, ren installationskontroll, signering och versionsmärkta GitHub-releaser.
+7. **Samla hela studentvardagen** – allmänna datum och resurser utan kurskoppling, resurstypen Information och en gemensam kalendersida.
+8. **Förbättra vardagsflödet** – valfri kursordning, fler än fyra kurser i snabbåtkomst och fungerande officiella schemalänkar.
+9. **Utöka distributionen** – separat testad och senare signerad/notariserad macOS-app; mobil/PWA är ett senare arkitekturspår.
 
 ## Version 1.1 – genomförd
 
@@ -63,7 +66,34 @@
    - En automatisk releasesäkerhetskontroll kräver en tom standardprofil och inga externa resurser på startsidan.
    - En separat integritetsbeskrivning följer med Windows-paketet.
    - En versionstagg skapar automatiskt ett GitHub Release-utkast; manuella byggen stannar som testpaket i GitHub Actions.
-   - Före offentlig publicering: välj licens, kontrollera en helt ren Windows-dator och skapa den första versionstaggen.
+   - Den offentliga förhandsversionen `v0.1.0-beta.2` är publicerad med direktlänk till Windows-ZIP.
+   - Återstår: välj licens, kontrollera en helt ren Windows-dator och inför kodsignering för smidigare start.
+
+7. **Allmänna datum och resurser – genomförd lokalt**
+   - Planeringsposter och resurser kan sparas utan kurskoppling och visas under `Allmänt`.
+   - Resurstypen `Information` stödjer bland annat labbkompendier och kursinstruktioner, med titel, beskrivning och valfri fil eller länk.
+   - Allmänna poster stöds av redigering, sökning, backup och återställning. Nästa större datamigrering ska också bevara dem.
+
+8. **Kursordning och snabbåtkomst – genomförd lokalt**
+   - Översikten visar nu alla aktiva kurser, även den femte och efterföljande kurser.
+   - En sparad manuell kursordning används både på kurssidan och i översikten.
+   - Tillgängliga flytta upp/ned-kontroller fungerar med mus och tangentbord; drag-and-drop är inte nödvändigt.
+
+9. **Samlad kalendersida – grundflödet genomfört lokalt**
+   - `Kalender` finns i vänsternavigeringen och visar kurskopplade samt allmänna datum i en agenda/listvy.
+   - Poster kan läggas till, redigeras, slutföras, filtreras och öppnas mot eventuell kurs direkt från sidan.
+   - `.ics`-importen finns på kalendersidan med val av kurs eller `Allmänt`, förhandsgranskning och dubblettskydd.
+   - Senare: månadsvy samt uttryckligen angivna publika TimeEdit-prenumerationslänkar med dubblett-, ändrings- och avbokningshantering. Ingen generell proxy eller inloggningsskrapning.
+
+10. **Schemalänkar – rättade lokalt**
+   - LiU-, KTH- och Chalmers-länkarna använder lärosätenas aktuella officiella schemavägar.
+   - Lund behåller den centrala TimeEdit-ingången eftersom universitetet använder flera fakultetsspecifika vyer.
+   - URL-konstruktionen täcks av adaptertester. Förifylld kurskod kan läggas till senare om respektive tjänst erbjuder stabila offentliga parametrar.
+
+11. **macOS-version – byggspår förberett lokalt**
+   - Separat macOS-paketering och ett manuellt GitHub Actions-bygge för Apple Silicon och Intel är förberedda. De skapar testartefakter men ingen automatisk release.
+   - Återstår: kör byggena och verifiera dataplats, fönster, filer, backup, kursuppslag och uppdatering på riktig Mac före publik release.
+   - Kodsignering och Apple-notarisation hanteras som ett separat beslut och får inte kringgås eller antas vara kostnadsfritt.
 
 ## Version 1.3 – lokal datagrund
 
@@ -109,6 +139,8 @@
 - **GitHub Pages:** gränssnitt och lokal data fungerar, men kursuppslag behöver flyttas från Python till en liten serverfunktion med begränsad CORS och hastighetsbegränsning.
 - **Portabel skrivbordsapp – förberedd:** byggprocessen paketerar server, webbgränssnitt och Python i samma `.exe`; nästa kontroll ska göras på en ren Windows-dator.
 - **Windows-installation:** bygg ett signerat installationsprogram med Start-meny, avinstallation och automatiska uppdateringar. Den portabla `.exe`-versionen ska finnas kvar som alternativ.
+- **macOS-app:** bygg och testa en separat `.app`; lägg till signering och notarisation innan den beskrivs som en friktionsfri publik nedladdning.
+- **Telefon/PWA:** gränssnittet är responsivt, men en full mobilversion kräver att kursuppslaget får en säker serverlösning eller annan arkitektur. Detta är större än att lägga till en GitHub-fil.
 - **Självhostning:** behåll `server.py` som enkel referensserver och dokumentera port, dataplats och uppdatering.
 
 ## Version 1.5 – kunskapsverktyg
@@ -137,4 +169,6 @@ Appens programkod versionshanteras som vanliga filer. Offentlig kursinformation 
 2. **GitHub:** bekräfta förrådsnamn och återanvändningslicens, kör kontrollerna på GitHub, granska Release-utkastet och publicera först efter acceptans. Inga användarprofiler eller säkerhetskopior får följa med.
 3. **Datatålighet:** utöka tester med uppgradering från äldre profilversioner och simulera avbrott mellan fillagring och metadata. De två lagringssystemen är inte en gemensam kraschatomisk databas; regelbundna externa säkerhetskopior behövs.
 4. **Första återkopplingen:** felrapportmall utan anteckningar/filer, fler tangentbordstester och hjälp för WebView2/startproblem.
-5. **Därefter funktioner:** knyt lektionsuppgifter till resurser, deluppgifter och egen deadline; förbättra TimeEdit med återkommande händelser och förhandsgranskade ändringar utan att skriva över egna noteringar.
+5. **Nästa funktionssteg:** knyt lektionsuppgifter till resurser och inför deluppgifter, full status, prioritet, uppskattad tid och egen deadline.
+6. **Nästa kalendersteg:** bygg månadsvy, export och därefter säker import från uttryckliga offentliga TimeEdit-prenumerationslänkar.
+7. **Nästa distributionsspår:** kör och acceptanstesta de separata macOS-byggena. Telefon/PWA planeras först när kursuppslagets serverarkitektur har valts.

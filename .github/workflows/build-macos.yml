@@ -1,0 +1,101 @@
+name: Bygg macOS-app
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-app:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            arch: arm64
+          - runner: macos-26-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Hämta koden
+        uses: actions/checkout@v7
+
+      - name: Installera Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Installera Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Installera byggverktyg
+        run: python -m pip install --requirement requirements-build-macos.txt
+
+      - name: Kontrollera tom profil och funktioner
+        run: python -m unittest discover -s tests -v
+
+      - name: Kontrollera kalenderimport och JavaScript
+        run: |
+          node --test tests/calendar_import.test.cjs
+          node --check dist/calendar-import.js
+          node --check dist/app.js
+
+      - name: Skapa Mac-ikon
+        run: |
+          python tools/build_macos_icon.py
+          iconutil -c icns build/Studieportalen.iconset -o build/icon.icns
+
+      - name: Bygg fristående Mac-program
+        run: >-
+          pyinstaller --noconfirm --clean --onedir --windowed
+          --name Studieportalen
+          --osx-bundle-identifier se.maackaan.studieportalen
+          --distpath build-output
+          --workpath build/pyinstaller
+          --hidden-import webview
+          --icon build/icon.icns
+          --add-data "dist:dist"
+          desktop.py
+
+      - name: Starttesta det paketerade fönstret
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          executable = Path("build-output/Studieportalen.app/Contents/MacOS/Studieportalen")
+          report = Path("build/macos-smoke.json").resolve()
+          process = subprocess.Popen([str(executable), "--self-test-report", str(report)])
+          try:
+              return_code = process.wait(timeout=60)
+          except subprocess.TimeoutExpired:
+              process.kill()
+              raise SystemExit("Det paketerade Mac-fönstret avslutade inte starttestet inom 60 sekunder.")
+          if return_code or not report.is_file():
+              raise SystemExit("Det paketerade Mac-fönstret kunde inte startas.")
+          result = json.loads(report.read_text(encoding="utf-8"))
+          if not result.get("ok"):
+              raise SystemExit(f"Starttestet misslyckades: {result.get('error', 'okänt fel')}")
+          PY
+
+      - name: Skapa nedladdningspaket
+        env:
+          MACOS_ARCH: ${{ matrix.arch }}
+        run: |
+          python tools/collect_licenses.py
+          python tools/package_macos.py
+
+      - name: Ladda upp Mac-paket
+        uses: actions/upload-artifact@v7
+        with:
+          name: Studieportalen-macOS-${{ matrix.arch }}
+          path: |
+            build-output/Studieportalen-macOS-${{ matrix.arch }}.zip
+            build-output/Studieportalen-macOS-${{ matrix.arch }}.sha256
+          if-no-files-found: error

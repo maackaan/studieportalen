@@ -9,15 +9,18 @@
 - Separat LiU-kursinformation, offentlig IDA-kurshemsida och TimeEdit-länk.
 - Genvägar till Canvas och officiell schemasökning för KTH, Chalmers och Lund.
 - Lokal `.ics`-import med förhandsgranskning, tentamensklassning och dubblettskydd.
+- Samlad kalendersida med kurskopplade och allmänna poster samt `.ics`-import till valfri kurs eller `Allmänt`.
+- Fristående datum och resurser, resurstypen Information och sparad kursordning.
 - Redigering, arkivering, återställning och ångra borttagning.
 - Fristående Windows-bygge och automatiserat GitHub Release-utkast.
+- Manuellt macOS-testbygge för Apple Silicon och Intel; riktig Mac-acceptans återstår före en Mac-release.
 - Automatisk kontroll av Python, JavaScript, kalenderimport, tom profil och offline-cache.
 - SHA-256-kontrollsumma bredvid varje Windows-paket.
 - Exakt låsta byggberoenden, ren sårbarhetskontroll och tredjepartslicenser i ZIP-paketet.
 
 ## Måste göras före första vänbetan
 
-Status 2026-09-15: 16 Python-tester, 5 kalendertester och isolerade gränssnittstester är godkända lokalt. GitHub Actions har dessutom godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.1` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned paketet och bekräftat att appen går att öppna.
+Status 2026-09-22: 18 Python-tester, 5 kalendertester och isolerade gränssnittstester är godkända lokalt för `0.1.0-beta.3-dev`. Testerna omfattar även allmänna poster, Information, fem kurser, sparad kursordning och kalendersidan vid 360, 768 och 1280 pixlar. GitHub Actions har tidigare godkänt testmatrisen i både Linux och Windows samt byggt och självtestat Windows-paketet i en ren byggmiljö. Källkoden och `v0.1.0-beta.2` är offentliga på `maackaan/studieportalen`. Både användaren och en testare har laddat ned beta 2 och bekräftat att appen går att öppna.
 
 Paketet är fortfarande osignerat (`NotSigned`). Testaren fick en Windows-varning men kunde välja att köra appen; andra datorer kan blockera den hårdare. Betan är därför inte verifierad för friktionsfri offentlig Windows-distribution.
 
@@ -44,6 +47,9 @@ Se [SIGNING.md](SIGNING.md) för signeringsalternativ och loggbevis. Liveuppslag
 - För LiU: kontrollera separat kursinformation, eventuell IDA-hemsida och TimeEdit-länk.
 - Lägg till, redigera, slutför och ta bort en uppgift.
 - Lägg till anteckning, länk, bild och gammal tenta.
+- Lägg till ett allmänt datum och en allmän Information-resurs med fil eller länk.
+- Lägg till minst fem kurser, flytta en kurs och bekräfta samma ordning på kurssidan och översikten.
+- Öppna kalendersidan, filtrera poster och importera en `.ics`-fil både till en kurs och till `Allmänt`.
 - Importera en `.ics`-fil två gånger och bekräfta att den andra importen inte skapar dubbletter.
 - Exportera en säkerhetskopia, stäng appen, öppna igen och kontrollera att allt finns kvar.
 - Återställ säkerhetskopian och kontrollera filer samt planering.

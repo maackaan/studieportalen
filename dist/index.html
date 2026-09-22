@@ -18,7 +18,7 @@
       type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1020'/%3E%3Cpath d='M12 25 32 14l20 11-20 11L12 25Z' fill='%237c6cff'/%3E%3Cpath d='M20 31v11c7 7 17 7 24 0V31l-12 7-12-7Z' fill='%23fff'/%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./styles.css?v=19" />
+    <link rel="stylesheet" href="./styles.css?v=20" />
   </head>
   <body>
     <div class="app-shell">
@@ -46,6 +46,10 @@
             <span data-icon="folder" aria-hidden="true"></span>
             Resurser
           </button>
+          <button class="nav-item" data-view="calendar">
+            <span data-icon="calendar" aria-hidden="true"></span>
+            Kalender
+          </button>
         </nav>
 
         <div class="sidebar-foot">
@@ -72,7 +76,7 @@
               <small>Din data stannar här</small>
             </div>
           </div>
-          <small class="app-version">Version 0.1.0-beta.2</small>
+          <small class="app-version">Version 0.1.0-beta.3-dev</small>
         </div>
       </aside>
 
@@ -199,6 +203,7 @@
                 <button class="filter-pill" data-filter="image">Bilder</button>
                 <button class="filter-pill" data-filter="link">Länkar</button>
                 <button class="filter-pill" data-filter="note">Anteckningar</button>
+                <button class="filter-pill" data-filter="info">Information</button>
               </div>
             </div>
             <div class="resource-table-wrap">
@@ -208,6 +213,29 @@
               </table>
               <div class="empty-state hidden" id="resourceEmpty"></div>
             </div>
+          </section>
+
+          <section class="view" id="calendarView" data-view-panel="calendar">
+            <div class="page-heading">
+              <div><p class="eyebrow">PLANERING</p><h1>Kalender</h1><p>Se kursdatum och allmän planering på samma plats.</p></div>
+              <button class="primary-button" id="addDateCalendar"><span data-icon="plus"></span>Ny planeringspost</button>
+            </div>
+            <div class="toolbar calendar-toolbar">
+              <div class="filter-pills" id="calendarFilters" aria-label="Filtrera kalendern">
+                <button class="filter-pill active" data-calendar-filter="upcoming">Kommande</button>
+                <button class="filter-pill" data-calendar-filter="all">Alla</button>
+                <button class="filter-pill" data-calendar-filter="completed">Klara</button>
+              </div>
+              <div class="calendar-import-controls">
+                <label for="calendarImportTarget">Importera till</label>
+                <select id="calendarImportTarget" aria-label="Kurs för kalenderimport"></select>
+                <button class="secondary-button compact" id="importCalendarOverview"><span data-icon="upload"></span>Importera .ics</button>
+              </div>
+              <span class="result-count" id="calendarResultCount"></span>
+            </div>
+            <section class="panel calendar-page-panel">
+              <div class="recent-list" id="calendarList"></div>
+            </section>
           </section>
 
           <section class="view" id="courseDetailView" data-view-panel="course-detail">
@@ -233,18 +261,18 @@
         </div>
 
         <div id="resourceFields" class="form-fields">
-          <label>Typ<select id="resourceType"><option value="exam">Gammal tenta</option><option value="image">Bild</option><option value="link">Kurslänk</option><option value="note">Anteckning</option></select></label>
+          <label>Typ<select id="resourceType"><option value="exam">Gammal tenta</option><option value="image">Bild</option><option value="link">Kurslänk</option><option value="note">Anteckning</option><option value="info">Information</option></select></label>
           <label>Namn<input id="resourceName" type="text" maxlength="80" placeholder="Till exempel Tenta januari 2025" /></label>
-          <label>Kurs<select id="resourceCourse"></select></label>
+          <label>Kurs (valfritt)<select id="resourceCourse"></select></label>
           <label id="urlField">Länk<input id="resourceUrl" type="url" placeholder="https://…" /></label>
           <label id="fileField" class="file-field">Välj fil<input id="resourceFile" type="file" /><span class="file-drop"><span data-icon="upload"></span><strong>Välj en fil från datorn</strong><small>PDF, bild eller annat kursmaterial</small></span></label>
-          <label id="noteField" class="hidden">Anteckning<textarea id="resourceNote" rows="4" placeholder="Skriv din anteckning…"></textarea></label>
+          <label id="noteField" class="hidden"><span id="resourceNoteLabel">Anteckning</span><textarea id="resourceNote" rows="4" placeholder="Skriv din anteckning…"></textarea></label>
         </div>
 
         <div id="dateFields" class="form-fields hidden">
           <label>Typ<select id="dateType"><option value="deadline">Deadline</option><option value="exam">Tentamen</option><option value="lesson">Lektionsuppgift</option><option value="reading">Läsning</option><option value="lab">Laboration</option></select></label>
           <label>Namn<input id="dateName" type="text" maxlength="80" placeholder="Till exempel Inlämning 2" /></label>
-          <label>Kurs<select id="dateCourse"></select></label>
+          <label>Kurs (valfritt)<select id="dateCourse"></select></label>
           <label>Datum och tid<input id="dateValue" type="datetime-local" /></label>
           <label>Information<textarea id="dateNote" rows="3" maxlength="240" placeholder="Sal, instruktioner eller annat viktigt…"></textarea></label>
         </div>
@@ -284,6 +312,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./calendar-import.js?v=2"></script>
-    <script src="./app.js?v=19"></script>
+    <script src="./app.js?v=20"></script>
   </body>
 </html>

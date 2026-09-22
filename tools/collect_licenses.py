@@ -1,4 +1,4 @@
-"""Collect license texts for components shipped in the Windows executable."""
+"""Collect license texts for components shipped in a desktop executable."""
 from __future__ import annotations
 
 import importlib.metadata as metadata
@@ -6,8 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "build" / "THIRD_PARTY_NOTICES.txt"
-RUNTIME_DISTRIBUTIONS = (
+WINDOWS_RUNTIME_DISTRIBUTIONS = (
     "pywebview",
     "pythonnet",
     "clr_loader",
@@ -19,6 +18,20 @@ RUNTIME_DISTRIBUTIONS = (
     "setuptools",
     "packaging",
     "pyinstaller",  # Its bootloader forms part of the generated executable.
+)
+MACOS_RUNTIME_DISTRIBUTIONS = (
+    "pywebview",
+    "pyobjc-core",
+    "pyobjc-framework-Cocoa",
+    "pyobjc-framework-Quartz",
+    "pyobjc-framework-WebKit",
+    "pyobjc-framework-Security",
+    "pyobjc-framework-UniformTypeIdentifiers",
+    "proxy_tools",
+    "bottle",
+    "typing_extensions",
+    "packaging",
+    "pyinstaller",
 )
 
 
@@ -49,32 +62,36 @@ def license_texts(distribution: metadata.Distribution, name: str) -> list[tuple[
 
 
 def main() -> None:
+    is_macos = sys.platform == "darwin"
+    output = ROOT / "build" / ("THIRD_PARTY_NOTICES-MACOS.txt" if is_macos else "THIRD_PARTY_NOTICES.txt")
+    runtime_distributions = MACOS_RUNTIME_DISTRIBUTIONS if is_macos else WINDOWS_RUNTIME_DISTRIBUTIONS
     python_license = Path(sys.base_prefix) / "LICENSE.txt"
     if not python_license.is_file():
         raise RuntimeError(f"Python-licensen saknas: {python_license}")
     sections = [
         "STUDIEPORTALEN — TREDJEPARTSLICENSER\n",
-        "Denna fil gäller komponenter som följer med Windows-paketet. "
+        f"Denna fil gäller komponenter som följer med {'macOS' if is_macos else 'Windows'}-paketet. "
         "Den bestämmer inte licensen för Studieportalens egen källkod.\n",
         f"{'=' * 78}\nPython {sys.version.split()[0]}\n{'=' * 78}\n"
         + python_license.read_text(encoding="utf-8", errors="replace").strip(),
     ]
-    for name in RUNTIME_DISTRIBUTIONS:
+    for name in runtime_distributions:
         distribution = metadata.distribution(name)
         heading = f"{distribution.metadata['Name']} {distribution.version}"
         texts = license_texts(distribution, name)
         body = "\n\n".join(f"--- {path} ---\n{text}" for path, text in texts)
         sections.append(f"{'=' * 78}\n{heading}\n{'=' * 78}\n{body}")
-    webview2_license = ROOT / "licenses" / "Microsoft.Web.WebView2-LICENSE.txt"
-    if not webview2_license.is_file():
-        raise RuntimeError(f"WebView2-licensen saknas: {webview2_license}")
-    sections.append(
-        f"{'=' * 78}\nMicrosoft.Web.WebView2 1.0.3856.49\n{'=' * 78}\n"
-        + webview2_license.read_text(encoding="utf-8").strip()
-    )
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text("\n\n".join(sections) + "\n", encoding="utf-8")
-    print(f"Licensfil klar: {OUTPUT}")
+    if not is_macos:
+        webview2_license = ROOT / "licenses" / "Microsoft.Web.WebView2-LICENSE.txt"
+        if not webview2_license.is_file():
+            raise RuntimeError(f"WebView2-licensen saknas: {webview2_license}")
+        sections.append(
+            f"{'=' * 78}\nMicrosoft.Web.WebView2 1.0.3856.49\n{'=' * 78}\n"
+            + webview2_license.read_text(encoding="utf-8").strip()
+        )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n\n".join(sections) + "\n", encoding="utf-8")
+    print(f"Licensfil klar: {output}")
 
 
 if __name__ == "__main__":

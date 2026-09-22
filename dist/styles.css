@@ -126,6 +126,7 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .resource-count { color: var(--muted); font-size: .75rem; }
 .row-arrow { color: #aeb3bf; transition: .2s ease; }
 .recent-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; min-height: 69px; padding: 9px 0; border-top: 1px solid var(--line); }
+.recent-item > div:not(.item-actions) { min-width: 0; }
 .recent-item:first-child { border-top: 0; }
 .recent-item.completed { opacity: .62; }
 .recent-item.completed strong { text-decoration: line-through; }
@@ -135,6 +136,9 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .date-chip.exam { color: var(--rose); }.date-chip.deadline { color: var(--primary); }
 .date-chip.lesson { color: var(--blue); }.date-chip.reading { color: var(--teal); }.date-chip.lab { color: var(--amber); }
 .event-note { max-width: 62ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-meta { display: flex !important; align-items: center; gap: 4px; }
+.event-course-link { max-width: 34ch; padding: 0; overflow: hidden; border: 0; color: var(--primary); background: transparent; font: inherit; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.event-course-link:hover { text-decoration: underline; }
 .item-actions { display: flex; align-items: center; gap: 4px; }
 .complete-event.completed { color: var(--teal); background: var(--teal-soft); }
 .resource-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; }
@@ -143,6 +147,7 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .resource-icon.image { color: var(--amber); background: var(--amber-soft); }
 .resource-icon.link { color: var(--blue); background: var(--blue-soft); }
 .resource-icon.note { color: var(--teal); background: var(--teal-soft); }
+.resource-icon.info { color: var(--primary); background: var(--purple-soft); }
 .open-mini { width: 34px; height: 34px; border: 0; border-radius: 9px; color: var(--muted); background: #f5f6f8; }
 .open-mini:hover { color: var(--primary); background: var(--purple-soft); }
 
@@ -160,7 +165,12 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .course-card { min-height: 255px; display: flex; flex-direction: column; padding: 23px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; box-shadow: 0 7px 24px rgba(20,27,45,.045); transition: .2s ease; }
 .course-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(20,27,45,.09); border-color: #dcd9f5; }
 .course-card.archived { opacity: .72; }
-.course-card-top { display: flex; align-items: center; justify-content: space-between; }
+.course-card-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 11px; }
+.course-order-actions { display: inline-flex; gap: 4px; margin-left: auto; }
+.course-order-actions button { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: #fff; }
+.course-order-actions button:hover:not(:disabled) { color: var(--primary); border-color: #cfc9ff; background: var(--purple-soft); }
+.course-order-actions button:disabled { opacity: .35; cursor: default; }
+.course-order-actions svg { width: 16px; height: 16px; }
 .course-card h3 { margin: 19px 0 6px; font: 700 1.12rem var(--font-display); letter-spacing: -.02em; }
 .course-card .course-code { color: var(--primary); font-size: .75rem; font-weight: 800; letter-spacing: .08em; }
 .course-card p { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin: 0; color: var(--muted); font-size: .84rem; }
@@ -173,6 +183,11 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .filter-pill { min-height: 38px; padding: 0 13px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: #fff; font-size: .82rem; font-weight: 600; }
 .filter-pill.active { color: var(--primary); border-color: #d9d4ff; background: var(--purple-soft); }
 .resource-table-wrap { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); }
+.calendar-toolbar { align-items: center; }
+.calendar-import-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.calendar-import-controls label { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.calendar-import-controls select { min-height: 40px; max-width: 260px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; }
+.calendar-page-panel { padding: 12px 24px; }
 .resource-table { width: 100%; border-collapse: collapse; }
 .resource-table th { padding: 15px 19px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--line); font-size: .72rem; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
 .resource-table td { padding: 15px 19px; border-top: 1px solid var(--line); font-size: .86rem; }
@@ -185,6 +200,7 @@ main { max-width: 1500px; margin: 0 auto; padding: 42px clamp(28px, 4vw, 64px) 6
 .type-chip.image { color: var(--amber); background: var(--amber-soft); }
 .type-chip.link { color: var(--blue); background: var(--blue-soft); }
 .type-chip.note { color: var(--teal); background: var(--teal-soft); }
+.type-chip.info { color: var(--primary); background: var(--purple-soft); }
 .table-actions { display: flex; justify-content: flex-end; gap: 5px; }
 .table-actions button { width: 34px; height: 34px; border: 0; border-radius: 9px; color: var(--muted); background: transparent; }
 .table-actions button:hover { color: var(--primary); background: var(--purple-soft); }
@@ -315,6 +331,9 @@ legend { margin-bottom: 8px; color: #4e5669; font-size: .8rem; font-weight: 700;
   .light-button { width: 100%; }
   .course-card-grid { grid-template-columns: 1fr; }
   .resource-toolbar { align-items: flex-start; flex-direction: column; }
+  .calendar-toolbar, .calendar-import-controls { width: 100%; align-items: stretch; flex-direction: column; }
+  .calendar-import-controls { margin-left: 0; }
+  .calendar-import-controls select { width: 100%; max-width: none; }
   .resource-table thead, .resource-table td:nth-child(2), .resource-table td:nth-child(4) { display: none; }
   .resource-table td { padding: 13px; }
   .course-detail-hero { grid-template-columns: auto 1fr; padding: 21px; }

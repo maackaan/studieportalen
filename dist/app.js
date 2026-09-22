@@ -20,6 +20,9 @@ const ICONS = {
   check: '<path d="m5 12 4 4L19 6"/>',
   edit: '<path d="M4 20h4l11-11-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>',
   archive: '<path d="M4 7h16v13H4z"/><path d="M3 3h18v4H3zM9 11h6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  up: '<path d="m6 14 6-6 6 6"/>',
+  down: '<path d="m6 10 6 6 6-6"/>',
 };
 
 document.querySelectorAll('[data-icon]').forEach((node) => {
@@ -33,6 +36,7 @@ const BACKUP_VERSION = 1;
 const MAX_RESOURCE_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_BACKUP_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_BACKUP_RAW_FILE_BYTES = 70 * 1024 * 1024;
+const FILE_RESOURCE_TYPES = ['exam', 'image', 'info'];
 const sampleData = {
   courses: [],
   resources: [],
@@ -45,6 +49,7 @@ let lastSavedState = structuredClone(state);
 let currentView = 'overview';
 let currentResourceFilter = 'all';
 let currentCourseFilter = 'active';
+let currentCalendarFilter = 'upcoming';
 let selectedCourseId = null;
 let addMode = 'resource';
 let editingCourseId = null;
@@ -70,6 +75,9 @@ const els = {
   resourceEmpty: document.querySelector('#resourceEmpty'),
   courseDetail: document.querySelector('#courseDetail'),
   courseResultCount: document.querySelector('#courseResultCount'),
+  calendarList: document.querySelector('#calendarList'),
+  calendarResultCount: document.querySelector('#calendarResultCount'),
+  calendarImportTarget: document.querySelector('#calendarImportTarget'),
   dialog: document.querySelector('#addDialog'),
   form: document.querySelector('#addForm'),
   resourceFields: document.querySelector('#resourceFields'),
@@ -161,7 +169,7 @@ function courseFor(resource) {
 }
 
 function typeLabel(type) {
-  return { exam: 'Tenta', image: 'Bild', link: 'Länk', note: 'Anteckning' }[type] || 'Resurs';
+  return { exam: 'Tenta', image: 'Bild', link: 'Länk', note: 'Anteckning', info: 'Information' }[type] || 'Resurs';
 }
 
 function typeIcon(type) {
@@ -233,6 +241,7 @@ function renderAll() {
   renderOverview();
   renderCourses();
   renderResources();
+  renderCalendar();
   if (selectedCourseId) renderCourseDetail(selectedCourseId);
 }
 
@@ -244,7 +253,7 @@ function renderCounts() {
 }
 
 function renderOverview() {
-  const courses = state.courses.filter((course) => !course.archived).slice(0, 4);
+  const courses = state.courses.filter((course) => !course.archived);
   els.overviewCourseList.innerHTML = courses.length
     ? courses.map((course) => {
       const count = state.resources.filter((r) => r.courseId === course.id).length;
@@ -261,10 +270,10 @@ function renderOverview() {
     ? recent.map((resource) => {
       const course = courseFor(resource);
       return `<article class="recent-item"><span class="resource-icon ${resource.type}">${svg(typeIcon(resource.type))}</span>
-        <div><strong>${escapeHtml(resource.name)}</strong><small>${escapeHtml(course?.name || 'Ingen kurs')} · ${formatDate(resource.createdAt)}</small></div>
+        <div><strong>${escapeHtml(resource.name)}</strong><small>${escapeHtml(course?.name || 'Allmänt')} · ${formatDate(resource.createdAt)}</small></div>
         <button class="open-mini" data-open-resource="${resource.id}" aria-label="Öppna ${escapeHtml(resource.name)}">${svg('external')}</button></article>`;
     }).join('')
-    : `<div class="empty-state">${emptyMarkup('Inga resurser ännu', 'Lägg till en tenta, bild, länk eller anteckning.')}</div>`;
+    : `<div class="empty-state">${emptyMarkup('Inga resurser ännu', 'Lägg till information, en tenta, bild, länk eller anteckning.')}</div>`;
 
   const upcoming = [...state.events]
     .filter((item) => !item.completed && new Date(item.date) >= new Date())
@@ -272,7 +281,7 @@ function renderOverview() {
     .slice(0, 4);
   els.upcomingDateList.innerHTML = upcoming.length
     ? upcoming.map((item) => dateItemMarkup(item)).join('')
-    : `<div class="empty-state">${emptyMarkup('Inget planerat', state.courses.length ? 'Lägg till en uppgift, deadline eller tentamen.' : 'Planering kan läggas till när du har skapat en kurs.')}</div>`;
+    : `<div class="empty-state">${emptyMarkup('Inget planerat', 'Lägg till en uppgift, deadline eller tentamen.')}</div>`;
 
   const hasCourses = state.courses.some((course) => !course.archived);
   document.querySelector('#focusTitle').textContent = hasCourses ? 'Bygg din kunskapsbank' : 'Börja med din första kurs';
@@ -286,7 +295,20 @@ function dateItemMarkup(item) {
   const month = new Intl.DateTimeFormat('sv-SE', { month: 'short' }).format(date).replace('.', '');
   const time = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' }).format(date);
   const label = { exam: 'Tentamen', deadline: 'Deadline', lesson: 'Lektionsuppgift', reading: 'Läsning', lab: 'Laboration' }[item.type] || 'Planering';
-  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(course?.name || 'Ingen kurs')} · ${time}</small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
+  const context = course ? `<button type="button" class="event-course-link" data-open-event-course="${course.id}">${escapeHtml(course.name)}</button>` : '<span>Allmänt</span>';
+  return `<article class="recent-item${item.completed ? ' completed' : ''}"><span class="date-day">${date.getDate()}<small>${month}</small></span><div><strong>${escapeHtml(item.name)}</strong><small class="event-meta">${context}<span>· ${time}</span></small>${item.note ? `<small class="event-note">${escapeHtml(item.note)}</small>` : ''}<span class="date-chip ${item.type}">${label}${item.completed ? ' · Klar' : ''}</span></div><div class="item-actions"><button class="open-mini" data-edit-event="${item.id}" aria-label="Redigera ${escapeHtml(item.name)}">${svg('edit')}</button><button class="open-mini complete-event${item.completed ? ' completed' : ''}" data-toggle-event="${item.id}" aria-label="${item.completed ? 'Markera som att göra' : 'Markera som klar'}">${svg('check')}</button><button class="open-mini delete-event" data-delete-event="${item.id}" aria-label="Ta bort planering">${svg('trash')}</button></div></article>`;
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const events = [...state.events]
+    .filter((item) => currentCalendarFilter === 'all'
+      || (currentCalendarFilter === 'completed' ? item.completed : !item.completed && new Date(item.date) >= now))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  els.calendarResultCount.textContent = `${events.length} ${events.length === 1 ? 'post' : 'poster'}`;
+  els.calendarList.innerHTML = events.length
+    ? events.map((item) => dateItemMarkup(item)).join('')
+    : `<div class="empty-state">${emptyMarkup(currentCalendarFilter === 'completed' ? 'Inget markerat som klart' : 'Inget planerat', 'Lägg till ett datum eller importera en .ics-fil.')}</div>`;
 }
 
 function renderCourses() {
@@ -300,8 +322,10 @@ function renderCourses() {
   els.courseGrid.innerHTML = courses.length
     ? courses.map((course) => {
       const count = state.resources.filter((r) => r.courseId === course.id).length;
+      const peers = state.courses.filter((item) => Boolean(item.archived) === Boolean(course.archived));
+      const peerIndex = peers.findIndex((item) => item.id === course.id);
       return `<article class="course-card${course.archived ? ' archived' : ''}">
-        <div class="course-card-top"><span class="course-badge ${course.color}">${escapeHtml(initials(course))}</span><span class="course-code">${escapeHtml(course.code || 'KURS')}${course.archived ? ' · ARKIVERAD' : ''}</span></div>
+        <div class="course-card-top"><span class="course-badge ${course.color}">${escapeHtml(initials(course))}</span><span class="course-code">${escapeHtml(course.code || 'KURS')}${course.archived ? ' · ARKIVERAD' : ''}</span><span class="course-order-actions"><button type="button" data-move-course="${course.id}" data-move-direction="up" aria-label="Flytta ${escapeHtml(course.name)} uppåt"${peerIndex === 0 ? ' disabled' : ''}>${svg('up')}</button><button type="button" data-move-course="${course.id}" data-move-direction="down" aria-label="Flytta ${escapeHtml(course.name)} nedåt"${peerIndex === peers.length - 1 ? ' disabled' : ''}>${svg('down')}</button></span></div>
         <h3>${escapeHtml(course.name)}</h3><p>${escapeHtml(course.description || 'Ingen beskrivning ännu.')}</p>
         <div class="course-card-foot"><span>${count} ${count === 1 ? 'resurs' : 'resurser'}</span><button class="course-open" data-course-id="${course.id}">Öppna →</button></div>
       </article>`;
@@ -322,7 +346,7 @@ function renderResources() {
   els.resourceTableBody.innerHTML = resources.map((resource) => {
     const course = courseFor(resource);
     return `<tr><td><div class="resource-name-cell"><span class="resource-icon ${resource.type}">${svg(typeIcon(resource.type))}</span><strong>${escapeHtml(resource.name)}</strong></div></td>
-      <td>${escapeHtml(course?.name || 'Ingen kurs')}</td><td><span class="type-chip ${resource.type}">${typeLabel(resource.type)}</span></td>
+      <td>${escapeHtml(course?.name || 'Allmänt')}</td><td><span class="type-chip ${resource.type}">${typeLabel(resource.type)}</span></td>
       <td>${formatDate(resource.createdAt)}</td><td><div class="table-actions"><button data-open-resource="${resource.id}" aria-label="Öppna ${escapeHtml(resource.name)}">${svg('external')}</button><button data-edit-resource="${resource.id}" aria-label="Redigera ${escapeHtml(resource.name)}">${svg('edit')}</button><button class="delete-button" data-delete-resource="${resource.id}" aria-label="Ta bort ${escapeHtml(resource.name)}">${svg('trash')}</button></div></td></tr>`;
   }).join('');
   els.resourceEmpty.classList.toggle('hidden', resources.length > 0);
@@ -331,11 +355,13 @@ function renderResources() {
 
 function renderCourseSelect() {
   const activeCourses = state.courses.filter((course) => !course.archived);
-  const options = activeCourses.length
-    ? activeCourses.map((course) => `<option value="${course.id}">${escapeHtml(course.name)}${course.code ? ` (${escapeHtml(course.code)})` : ''}</option>`).join('')
-    : '<option value="">Skapa en kurs först</option>';
+  const options = `<option value="">Allmänt · ingen kurs</option>${activeCourses
+    .map((course) => `<option value="${course.id}">${escapeHtml(course.name)}${course.code ? ` (${escapeHtml(course.code)})` : ''}</option>`).join('')}`;
   els.resourceCourse.innerHTML = options;
   els.dateCourse.innerHTML = options;
+  const importTarget = els.calendarImportTarget.value;
+  els.calendarImportTarget.innerHTML = options;
+  if ([...els.calendarImportTarget.options].some((option) => option.value === importTarget)) els.calendarImportTarget.value = importTarget;
 }
 
 function renderCourseDetail(courseId) {
@@ -345,7 +371,7 @@ function renderCourseDetail(courseId) {
   const events = state.events.filter((event) => event.courseId === course.id).sort((a, b) => new Date(a.date) - new Date(b.date));
   els.courseDetail.innerHTML = `<div class="course-detail-hero"><span class="course-badge ${course.color}">${escapeHtml(initials(course))}</span><div><h1>${escapeHtml(course.name)}</h1><p>${escapeHtml(course.code || 'Ingen kurskod')} · ${escapeHtml(course.universityName || '')}${course.archived ? ' · Arkiverad' : ''}</p></div><div class="course-hero-actions"><button class="secondary-button" data-edit-course="${course.id}">${svg('edit')} Redigera</button><button class="secondary-button" data-toggle-course-archive="${course.id}">${svg('archive')} ${course.archived ? 'Återaktivera' : 'Arkivera'}</button>${course.archived ? '' : `<button class="primary-button" data-add-resource-course="${course.id}">${svg('plus')} Lägg till resurs</button>`}</div></div>
     <div class="course-detail-body"><div class="course-detail-main"><section class="panel"><div class="panel-heading"><div><p class="section-kicker">MATERIAL</p><h2>Kursresurser</h2></div><span class="result-count">${resources.length} st</span></div>
-      <div class="recent-list">${resources.length ? resources.map((resource) => `<article class="recent-item"><span class="resource-icon ${resource.type}">${svg(typeIcon(resource.type))}</span><div><strong>${escapeHtml(resource.name)}</strong><small>${typeLabel(resource.type)} · ${formatDate(resource.createdAt)}</small></div><div class="item-actions"><button class="open-mini" data-open-resource="${resource.id}" aria-label="Öppna ${escapeHtml(resource.name)}">${svg('external')}</button><button class="open-mini" data-edit-resource="${resource.id}" aria-label="Redigera ${escapeHtml(resource.name)}">${svg('edit')}</button></div></article>`).join('') : `<div class="empty-state">${emptyMarkup('Inget material ännu', 'Lägg till en tenta, bild, länk eller anteckning.')}</div>`}</div></section>
+      <div class="recent-list">${resources.length ? resources.map((resource) => `<article class="recent-item"><span class="resource-icon ${resource.type}">${svg(typeIcon(resource.type))}</span><div><strong>${escapeHtml(resource.name)}</strong><small>${typeLabel(resource.type)} · ${formatDate(resource.createdAt)}</small></div><div class="item-actions"><button class="open-mini" data-open-resource="${resource.id}" aria-label="Öppna ${escapeHtml(resource.name)}">${svg('external')}</button><button class="open-mini" data-edit-resource="${resource.id}" aria-label="Redigera ${escapeHtml(resource.name)}">${svg('edit')}</button></div></article>`).join('') : `<div class="empty-state">${emptyMarkup('Inget material ännu', 'Lägg till information, en tenta, bild, länk eller anteckning.')}</div>`}</div></section>
       <section class="panel"><div class="panel-heading"><div><p class="section-kicker">PLANERING</p><h2>Uppgifter och viktiga datum</h2></div><div class="panel-heading-actions"><button class="secondary-button compact" data-import-calendar-course="${course.id}">${svg('upload')} Importera kalender</button><button class="icon-button" data-add-date-course="${course.id}" aria-label="Lägg till planering">${svg('plus')}</button></div></div><div class="recent-list">${events.length ? events.map((event) => dateItemMarkup(event)).join('') : `<div class="empty-state">${emptyMarkup('Inget planerat ännu', 'Lägg till en uppgift, deadline, laboration eller tentamen.')}</div>`}</div></section></div>
       <aside class="panel"><div class="panel-heading"><div><p class="section-kicker">OM KURSEN</p><h2>Information</h2></div></div><p class="course-info-text">${escapeHtml(course.description || 'Ingen beskrivning ännu.')}</p><div class="course-links">${course.courseHomeUrl ? `<a class="external-link" href="${escapeHtml(course.courseHomeUrl)}" target="_blank" rel="noopener">Kurshemsida och uppgifter ${svg('external')}</a>` : ''}${course.url ? `<a class="external-link" href="${escapeHtml(course.url)}" target="_blank" rel="noopener">Officiell kursinformation ${svg('external')}</a>` : ''}${course.scheduleUrl ? `<a class="external-link" href="${escapeHtml(course.scheduleUrl)}" target="_blank" rel="noopener">Öppna schema eller kalender ${svg('calendar')}</a>` : ''}${!course.courseHomeUrl && !course.url && !course.scheduleUrl ? '<p class="course-info-text">Inga kurslänkar tillagda.</p>' : ''}</div><div style="margin-top:30px"><button class="text-button delete-course" data-delete-course="${course.id}">Ta bort kurs</button></div></aside></div>`;
 }
@@ -426,7 +452,7 @@ function editResource(resourceId) {
   ensureCourseCanBeSelected(els.resourceCourse, resource.courseId);
   els.resourceType.value = resource.type;
   els.resourceName.value = resource.name || '';
-  els.resourceCourse.value = resource.courseId;
+  els.resourceCourse.value = resource.courseId || '';
   els.resourceUrl.value = resource.url || '';
   els.resourceNote.value = resource.note || '';
   updateResourceFields();
@@ -450,7 +476,7 @@ function editEvent(eventId) {
   ensureCourseCanBeSelected(els.dateCourse, item.courseId);
   els.dateType.value = item.type;
   els.dateName.value = item.name || '';
-  els.dateCourse.value = item.courseId;
+  els.dateCourse.value = item.courseId || '';
   els.dateValue.value = toLocalDateTimeValue(item.date);
   els.dateNote.value = item.note || '';
   setTimeout(() => els.dateName.focus(), 40);
@@ -467,17 +493,18 @@ function setAddMode(mode) {
 
 function updateResourceFields() {
   const type = els.resourceType.value;
-  els.urlField.classList.toggle('hidden', type !== 'link');
-  els.fileField.classList.toggle('hidden', !['exam', 'image'].includes(type));
-  els.noteField.classList.toggle('hidden', type !== 'note');
-  els.resourceFile.accept = type === 'image' ? 'image/*' : type === 'exam' ? '.pdf,.doc,.docx' : '';
+  els.urlField.classList.toggle('hidden', !['link', 'info'].includes(type));
+  els.fileField.classList.toggle('hidden', !FILE_RESOURCE_TYPES.includes(type));
+  els.noteField.classList.toggle('hidden', !['note', 'info'].includes(type));
+  document.querySelector('#resourceNoteLabel').textContent = type === 'info' ? 'Beskrivning' : 'Anteckning';
+  els.resourceNote.placeholder = type === 'info' ? 'Beskriv materialet eller skriv viktig information…' : 'Skriv din anteckning…';
+  els.resourceFile.accept = type === 'image' ? 'image/*' : type === 'info' ? '.pdf,.doc,.docx,.txt,.md' : type === 'exam' ? '.pdf,.doc,.docx' : '';
 }
 
 async function handleSubmit(event) {
   event.preventDefault();
   els.formError.textContent = '';
   if (addMode === 'date') {
-    if (!els.dateCourse.value) return showFormError('Skapa eller återaktivera en kurs innan du lägger till planering.');
     const name = els.dateName.value.trim();
     if (!name) return showFormError('Skriv ett namn på datumet.');
     if (!els.dateValue.value) return showFormError('Välj datum och tid.');
@@ -518,18 +545,19 @@ async function handleSubmit(event) {
     return;
   }
 
-  if (!els.resourceCourse.value) return showFormError('Skapa eller återaktivera en kurs innan du lägger till en resurs.');
   const name = els.resourceName.value.trim();
   if (!name) return showFormError('Skriv ett namn på resursen.');
   const type = els.resourceType.value;
   const url = normalizeUrl(els.resourceUrl.value.trim());
   if (type === 'link' && !url) return showFormError('Lägg till en giltig webbadress.');
+  if (type === 'info' && els.resourceUrl.value.trim() && !url) return showFormError('Kontrollera webbadressen.');
   if (type === 'note' && !els.resourceNote.value.trim()) return showFormError('Skriv en anteckning.');
+  if (type === 'info' && !els.resourceNote.value.trim()) return showFormError('Skriv en kort beskrivning av informationen.');
   const existing = editingResourceId ? state.resources.find((item) => item.id === editingResourceId) : null;
   if (editingResourceId && !existing) return showFormError('Resursen kunde inte hittas.');
   const file = els.resourceFile.files[0];
   if (file?.size > MAX_RESOURCE_FILE_BYTES) return showFormError('Filen är för stor. Maximal storlek är 25 MB.');
-  const keepsExistingFile = existing && existing.type === type && ['exam', 'image'].includes(type) && existing.fileName;
+  const keepsExistingFile = existing && existing.type === type && FILE_RESOURCE_TYPES.includes(type) && existing.fileName;
   if (['exam', 'image'].includes(type) && !file && !keepsExistingFile) return showFormError('Välj en fil från datorn.');
   const resource = {
     id: existing?.id || uid('resource'), name, courseId: els.resourceCourse.value, type, url,
@@ -611,15 +639,7 @@ function normalizeUrl(value) {
 async function openResource(id) {
   const resource = state.resources.find((item) => item.id === id);
   if (!resource) return;
-  if (resource.type === 'note') {
-    showResourcePreview(resource, `<article class="note-preview">${escapeHtml(resource.note || 'Anteckningen är tom.')}</article>`);
-    return;
-  }
-  if (resource.url) {
-    window.open(resource.url, '_blank', 'noopener');
-    return;
-  }
-  const file = await getFile(id);
+  const file = resource.fileName ? await getFile(id) : null;
   if (file) {
     const fileUrl = URL.createObjectURL(file);
     currentPreviewUrl = fileUrl;
@@ -627,6 +647,14 @@ async function openResource(id) {
       ? `<img src="${fileUrl}" alt="${escapeHtml(resource.name)}" />`
       : `<iframe ${file.type === 'application/pdf' ? '' : 'sandbox=""'} src="${fileUrl}" title="${escapeHtml(resource.name)}"></iframe>`;
     showResourcePreview(resource, content);
+    return;
+  }
+  if (resource.url) {
+    window.open(resource.url, '_blank', 'noopener');
+    return;
+  }
+  if (['note', 'info'].includes(resource.type)) {
+    showResourcePreview(resource, `<article class="note-preview">${escapeHtml(resource.note || 'Informationen är tom.')}</article>`);
     return;
   }
   showToast(resource.sample ? 'Detta är exempeldata – lägg till din egen fil eller länk' : 'Filen kunde inte hittas');
@@ -683,6 +711,21 @@ function toggleCourseArchive(id) {
   course.archived = !course.archived;
   saveState(); renderAll();
   showToast(course.archived ? 'Kursen har arkiverats' : 'Kursen är aktiv igen');
+}
+
+function moveCourse(id, direction) {
+  const course = state.courses.find((item) => item.id === id);
+  if (!course) return;
+  const peers = state.courses.filter((item) => Boolean(item.archived) === Boolean(course.archived));
+  const peerIndex = peers.findIndex((item) => item.id === id);
+  const targetPeer = peers[peerIndex + (direction === 'up' ? -1 : 1)];
+  if (!targetPeer) return;
+  const courseIndex = state.courses.indexOf(course);
+  const targetIndex = state.courses.indexOf(targetPeer);
+  [state.courses[courseIndex], state.courses[targetIndex]] = [state.courses[targetIndex], state.courses[courseIndex]];
+  saveState();
+  renderAll();
+  showToast(`${course.name} har flyttats ${direction === 'up' ? 'uppåt' : 'nedåt'}`);
 }
 
 function deleteEvent(id) {
@@ -742,7 +785,11 @@ document.querySelectorAll('.nav-item').forEach((button) => button.addEventListen
 document.querySelectorAll('[data-go-to]').forEach((button) => button.addEventListener('click', () => switchView(button.dataset.goTo)));
 ['#quickAddButton', '#addResourceButton', '#addResourceOverview'].forEach((selector) => document.querySelector(selector)?.addEventListener('click', () => openDialog('resource')));
 ['#addCourseButton', '#addCourseOverview'].forEach((selector) => document.querySelector(selector)?.addEventListener('click', () => openDialog('course')));
-document.querySelector('#addDateOverview').addEventListener('click', () => openDialog('date'));
+['#addDateOverview', '#addDateCalendar'].forEach((selector) => document.querySelector(selector).addEventListener('click', () => openDialog('date')));
+document.querySelector('#importCalendarOverview').addEventListener('click', () => {
+  calendarImportCourseId = els.calendarImportTarget.value;
+  els.calendarImportInput.click();
+});
 document.querySelector('#focusAddButton').addEventListener('click', () => openDialog(state.courses.some((course) => !course.archived) ? 'resource' : 'course'));
 document.querySelector('#backToCourses').addEventListener('click', () => switchView('courses'));
 els.menuButton.addEventListener('click', openSidebar);
@@ -773,6 +820,11 @@ document.querySelectorAll('[data-course-filter]').forEach((button) => button.add
   currentCourseFilter = button.dataset.courseFilter;
   document.querySelectorAll('[data-course-filter]').forEach((pill) => pill.classList.toggle('active', pill === button));
   renderCourses();
+}));
+document.querySelectorAll('[data-calendar-filter]').forEach((button) => button.addEventListener('click', () => {
+  currentCalendarFilter = button.dataset.calendarFilter;
+  document.querySelectorAll('[data-calendar-filter]').forEach((pill) => pill.classList.toggle('active', pill === button));
+  renderCalendar();
 }));
 
 els.resourceFile.addEventListener('change', () => {
@@ -805,10 +857,13 @@ document.addEventListener('click', (event) => {
   const deleteCourseTarget = event.target.closest('[data-delete-course]');
   const editCourseTarget = event.target.closest('[data-edit-course]');
   const archiveCourseTarget = event.target.closest('[data-toggle-course-archive]');
+  const moveCourseTarget = event.target.closest('[data-move-course]');
   const deleteEventTarget = event.target.closest('[data-delete-event]');
   const editEventTarget = event.target.closest('[data-edit-event]');
   const toggleEventTarget = event.target.closest('[data-toggle-event]');
-  if (courseTarget) openCourse(courseTarget.dataset.courseId);
+  const openEventCourseTarget = event.target.closest('[data-open-event-course]');
+  if (moveCourseTarget) moveCourse(moveCourseTarget.dataset.moveCourse, moveCourseTarget.dataset.moveDirection);
+  else if (courseTarget) openCourse(courseTarget.dataset.courseId);
   else if (openTarget) openResource(openTarget.dataset.openResource);
   else if (editResourceTarget) editResource(editResourceTarget.dataset.editResource);
   else if (deleteTarget) deleteResource(deleteTarget.dataset.deleteResource);
@@ -824,6 +879,7 @@ document.addEventListener('click', (event) => {
   else if (deleteEventTarget) deleteEvent(deleteEventTarget.dataset.deleteEvent);
   else if (editEventTarget) editEvent(editEventTarget.dataset.editEvent);
   else if (toggleEventTarget) toggleEvent(toggleEventTarget.dataset.toggleEvent);
+  else if (openEventCourseTarget) openCourse(openEventCourseTarget.dataset.openEventCourse);
 });
 
 document.addEventListener('keydown', (event) => {
@@ -961,12 +1017,13 @@ function validateBackup(input) {
   const courseIds = new Set(courses.map((course) => course.id));
   const resourceIds = new Set();
   const resources = data.resources.map((resource) => {
-    if (!validBackupId(resource.id) || resourceIds.has(resource.id) || !courseIds.has(resource.courseId) || !['exam', 'image', 'link', 'note'].includes(resource.type)) throw new Error('En resurs i säkerhetskopian är ogiltig.');
+    const courseId = cleanBackupText(resource.courseId, 160);
+    if (!validBackupId(resource.id) || resourceIds.has(resource.id) || (courseId && !courseIds.has(courseId)) || !['exam', 'image', 'link', 'note', 'info'].includes(resource.type)) throw new Error('En resurs i säkerhetskopian är ogiltig.');
     resourceIds.add(resource.id);
     return {
       id: resource.id,
       name: cleanBackupText(resource.name, 120).trim() || 'Namnlös resurs',
-      courseId: resource.courseId,
+      courseId,
       type: resource.type,
       url: normalizeUrl(cleanBackupText(resource.url, 2000).trim()),
       note: cleanBackupText(resource.note, 200000),
@@ -978,13 +1035,14 @@ function validateBackup(input) {
   const eventIds = new Set();
   const events = data.events.map((item) => {
     const date = new Date(item.date);
-    if (!validBackupId(item.id) || eventIds.has(item.id) || !courseIds.has(item.courseId) || Number.isNaN(date.getTime()) || !['deadline', 'exam', 'lesson', 'reading', 'lab'].includes(item.type)) throw new Error('En planeringspost i säkerhetskopian är ogiltig.');
+    const courseId = cleanBackupText(item.courseId, 160);
+    if (!validBackupId(item.id) || eventIds.has(item.id) || (courseId && !courseIds.has(courseId)) || Number.isNaN(date.getTime()) || !['deadline', 'exam', 'lesson', 'reading', 'lab'].includes(item.type)) throw new Error('En planeringspost i säkerhetskopian är ogiltig.');
     eventIds.add(item.id);
     return {
       id: item.id,
       type: item.type,
       name: cleanBackupText(item.name, 120).trim() || 'Namnlöst datum',
-      courseId: item.courseId,
+      courseId,
       date: date.toISOString(),
       note: cleanBackupText(item.note, 2000),
       completed: Boolean(item.completed),
@@ -1016,7 +1074,7 @@ async function exportProfile() {
     const files = [];
     let totalFileBytes = 0;
     for (const resource of state.resources) {
-      if (!['exam', 'image'].includes(resource.type)) continue;
+      if (!resource.fileName) continue;
       const file = await getFile(resource.id);
       if (!file) continue;
       if (file.size > MAX_RESOURCE_FILE_BYTES) throw new Error('En fil är större än 25 MB.');
@@ -1076,9 +1134,9 @@ async function importCalendar(event) {
   event.target.value = '';
   const courseId = calendarImportCourseId;
   calendarImportCourseId = null;
-  if (!calendarFile || !courseId) return;
-  const course = state.courses.find((item) => item.id === courseId);
-  if (!course) return alert('Kursen kunde inte hittas. Ingen kalender importerades.');
+  if (!calendarFile || courseId === null) return;
+  const course = courseId ? state.courses.find((item) => item.id === courseId) : null;
+  if (courseId && !course) return alert('Kursen kunde inte hittas. Ingen kalender importerades.');
   if (calendarFile.size > 2_000_000) return alert('Kalenderfilen är för stor. Maximal storlek är 2 MB.');
   try {
     const imported = window.StudieportalenCalendar?.parseCalendar(await calendarFile.text()) || [];
@@ -1091,8 +1149,8 @@ async function importCalendar(event) {
     )));
     const duplicateCount = unique.length - additions.length;
     if (!additions.length) return showToast(`Kalendern är redan importerad · ${duplicateCount} dubbletter`);
-    const chosen = await previewCalendar(additions, course.name, duplicateCount);
-    if (!chosen.length || !state.courses.some((item) => item.id === courseId)) return;
+    const chosen = await previewCalendar(additions, course?.name || 'Allmänt', duplicateCount);
+    if (!chosen.length || (courseId && !state.courses.some((item) => item.id === courseId))) return;
     const createdAt = new Date().toISOString();
     chosen.forEach((item) => state.events.push({
       id: uid('event'),
@@ -1142,7 +1200,7 @@ document.querySelector('#todayLabel').textContent = new Intl.DateTimeFormat('sv-
 document.querySelector('#greeting').textContent = now.getHours() < 10 ? 'God morgon' : now.getHours() < 17 ? 'God eftermiddag' : 'God kväll';
 
 const initialHash = location.hash.replace('#', '');
-if (['overview', 'courses', 'resources'].includes(initialHash)) switchView(initialHash, { updateHash: false });
+if (['overview', 'courses', 'resources', 'calendar'].includes(initialHash)) switchView(initialHash, { updateHash: false });
 renderAll();
 
 window.addEventListener('beforeinstallprompt', (event) => {

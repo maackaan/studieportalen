@@ -23,7 +23,7 @@ class CourseLookupTests(unittest.TestCase):
         self.assertEqual(course["name"], "Avancerad webbprogrammering")
         self.assertEqual(course["credits"], "6 hp")
         self.assertEqual(course["courseHomeUrl"], "https://www.ida.liu.se/~TDDD27/")
-        self.assertIn("timeedit.net/liu", course["scheduleUrl"])
+        self.assertEqual(course["scheduleUrl"], "https://cloud.timeedit.net/liu/web/schema/ri1Q7.html")
 
     @patch("server.fetch_html")
     def test_liu_lookup_tolerates_missing_ida_home_page(self, fetch_html):
@@ -52,7 +52,7 @@ class CourseLookupTests(unittest.TestCase):
         self.assertEqual(course["name"], "Programmering")
         self.assertEqual(course["credits"], "7,0 hp")
         self.assertEqual(course["courseHomeUrl"], "https://canvas.kth.se/")
-        self.assertIn("kth.se/student/studier/schema", course["scheduleUrl"])
+        self.assertEqual(course["scheduleUrl"], "https://www.kth.se/student/studier/schema/sok-schema-1.2214")
 
     @patch("server.fetch_html")
     def test_chalmers_lookup(self, fetch_html):
@@ -65,7 +65,7 @@ class CourseLookupTests(unittest.TestCase):
         self.assertEqual(course["name"], "Computer graphics")
         self.assertEqual(course["credits"], "7,5 hp")
         self.assertEqual(course["courseHomeUrl"], "https://canvas.chalmers.se/")
-        self.assertIn("timeedit.net/chalmers", course["scheduleUrl"])
+        self.assertEqual(course["scheduleUrl"], "https://cloud.timeedit.net/chalmers/web/public/ri1Q7.html")
 
     @patch("server.fetch_html")
     def test_lund_general_course_page(self, fetch_html):

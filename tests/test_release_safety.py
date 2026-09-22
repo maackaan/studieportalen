@@ -59,6 +59,18 @@ class ReleaseSafetyTests(unittest.TestCase):
         self.assertIn("INTEGRITET.txt", packager)
         self.assertNotIn("studieportalen-backup-", packager)
 
+    def test_macos_build_is_manual_and_packages_no_profile(self):
+        workflow = (ROOT / ".github" / "workflows" / "build-macos.yml").read_text(encoding="utf-8")
+        packager = (ROOT / "tools" / "package_macos.py").read_text(encoding="utf-8")
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("tags:", workflow)
+        self.assertIn("macos-26", workflow)
+        self.assertIn("macos-26-intel", workflow)
+        self.assertIn("--self-test-report", workflow)
+        self.assertIn("Studieportalen.app", packager)
+        self.assertNotIn("studieportalen-backup-", packager)
+
 
 if __name__ == "__main__":
     unittest.main()

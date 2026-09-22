@@ -82,7 +82,7 @@ def lookup_liu(code: str) -> dict:
         "credits": f"{credits_match.group(1)} hp" if credits_match else "",
         "url": url,
         "courseHomeUrl": discover_liu_course_home(code),
-        "scheduleUrl": "https://cloud.timeedit.net/liu/web/schema/",
+        "scheduleUrl": "https://cloud.timeedit.net/liu/web/schema/ri1Q7.html",
         "description": description,
     }
 
@@ -107,7 +107,7 @@ def lookup_kth(code: str) -> dict:
         "credits": f"{credits_match.group(1)} hp" if credits_match else "",
         "url": url,
         "courseHomeUrl": "https://canvas.kth.se/",
-        "scheduleUrl": "https://www.kth.se/student/studier/schema",
+        "scheduleUrl": "https://www.kth.se/student/studier/schema/sok-schema-1.2214",
         "description": description,
     }
 
@@ -127,7 +127,7 @@ def lookup_chalmers(code: str) -> dict:
         "credits": f"{credits_match.group(1)} hp" if credits_match else "",
         "url": url,
         "courseHomeUrl": "https://canvas.chalmers.se/",
-        "scheduleUrl": "https://cloud.timeedit.net/chalmers/web/public/",
+        "scheduleUrl": "https://cloud.timeedit.net/chalmers/web/public/ri1Q7.html",
         "description": description,
     }
 
