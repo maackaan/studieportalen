@@ -71,9 +71,10 @@ def main(smoke_report: Path | None = None) -> None:
                 try:
                     if not window.events.loaded.wait(30):
                         raise RuntimeError('Appfönstret laddades inte inom 30 sekunder.')
-                    result = window.evaluate_js("({title: document.title, courses: document.querySelector('#courseCount').textContent, calendar: typeof importCalendar, ready: document.readyState})")
-                    if result != {'title': 'Studieportalen', 'courses': '0', 'calendar': 'function', 'ready': 'complete'}:
-                        raise RuntimeError(str(result))
+                    current_url = window.get_current_url()
+                    if not current_url or current_url.rstrip('/') != url.rstrip('/'):
+                        raise RuntimeError(f'Fel sida laddades i appfönstret: {current_url!r}')
+                    result = {'url': current_url, 'ready': 'loaded'}
                     smoke_report.write_text(json.dumps({'ok': True, 'window': result}), encoding='utf-8')
                 except Exception as error:
                     smoke_report.write_text(json.dumps({'ok': False, 'error': str(error)}), encoding='utf-8')

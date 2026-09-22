@@ -14,7 +14,7 @@ class DesktopLauncherTests(unittest.TestCase):
         webview.settings = {}
         window = webview.create_window.return_value
         window.events.loaded.wait.return_value = True
-        window.evaluate_js.return_value = {'title': 'Studieportalen', 'courses': '0', 'calendar': 'function', 'ready': 'complete'}
+        window.get_current_url.side_effect = lambda: webview.create_window.call_args.args[1]
         webview.start.side_effect = lambda **kwargs: kwargs['func']()
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / 'report.json'
