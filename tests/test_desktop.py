@@ -43,6 +43,31 @@ class DesktopLauncherTests(unittest.TestCase):
             self.assertEqual(path, Path(directory) / "Library" / "Application Support" / "Studieportalen" / "WebView")
             self.assertTrue(path.is_dir())
 
+    def test_windows_zip_keeps_the_existing_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(desktop.sys, "platform", "win32"), patch.dict(
+                "os.environ", {"LOCALAPPDATA": directory}
+            ), patch.object(desktop, "windows_package_family_name", return_value=None):
+                path = desktop.storage_directory()
+            self.assertEqual(path, Path(directory) / "Studieportalen" / "WebView")
+
+    def test_store_profile_is_stable_across_updates_and_separate_from_zip(self):
+        with tempfile.TemporaryDirectory() as directory:
+            family = "Studieportalen.Test_123456789abcd"
+            legacy = Path(directory) / "Studieportalen" / "WebView"
+            legacy.mkdir(parents=True)
+            marker = legacy / "private-test-data.txt"
+            marker.write_text("Do not migrate or overwrite raw browser files.")
+            with patch.object(desktop.sys, "platform", "win32"), patch.dict(
+                "os.environ", {"LOCALAPPDATA": directory}
+            ), patch.object(desktop, "windows_package_family_name", return_value=family):
+                first = desktop.storage_directory()
+                updated = desktop.storage_directory()
+            self.assertEqual(first, updated)
+            self.assertEqual(first, Path(directory) / "Packages" / family / "LocalState" / "Studieportalen" / "WebView")
+            self.assertTrue(marker.is_file())
+            self.assertFalse((first / marker.name).exists())
+
     def test_local_server_uses_loopback(self):
         server, thread = desktop.start_local_server(port=0)
         try:

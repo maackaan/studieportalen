@@ -8,6 +8,8 @@ En lokal portal för kurser, gamla tentor, kursbilder, länkar, anteckningar och
 
 **Offentlig förhandsversion.** På [versionssidan](https://github.com/maackaan/studieportalen/releases) väljer du paketet för din dator, inte GitHubs automatiska “Source code”-filer. Betan är osignerad och kan därför ge en säkerhetsvarning eller blockeras på vissa datorer; se [betachecklistan](BETA_CHECKLIST.md).
 
+Arbetskopian utvecklas nu som `0.1.0-beta.4-dev` med förbättrad kalenderlayout och ett förberett MSIX-byggflöde. Beta 3-länkarna ovan pekar fortsatt på den publicerade versionen. Microsoft Store-versionen är ännu inte publicerad; nästa steg finns i [STORE_RELEASE.md](STORE_RELEASE.md).
+
 ## För vanliga användare
 
 Den färdiga Windows-versionen är tänkt att fungera som ett vanligt program:

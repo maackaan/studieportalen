@@ -1,5 +1,13 @@
 # Utvecklingsplan för Studieportalen
 
+## Arbetspass 2026-10-12 – efter Beta 3
+
+- Översiktens händelser visar namn, kurskod, tid och typ på separata rader. Namnet öppnar händelseinformation; datum efter midnatt visas tydligt.
+- Veckokalendern ryms utan inre sidoförskjutning i desktopläge. Små skärmar behåller avsiktlig horisontell rullning för alla sju dagarna, utan ett extra vertikalt rullningsområde.
+- Händelseåtgärder och resurslistor anpassas efter panelens faktiska bredd. Översiktens kurspanel sträcks inte längre till hela höjden på sidopanelerna.
+- Manuellt MSIX-byggflöde, SDK-validering, Store-identitet och separat, stabil paketprofil förberedda. Slutlig installation, datamigrering, uppdatering och certifiering följer [STORE_RELEASE.md](STORE_RELEASE.md).
+- Nuvarande kandidat: `0.1.0-beta.4-dev`. Ingen ny publik release skapas av detta arbetspass.
+
 ## Prioritering från september 2026
 
 1. **Skydda och kunna korrigera data** – redigering av alla grundposter samt ångra borttagning.

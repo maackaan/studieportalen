@@ -11,7 +11,9 @@ Följande uppgifter lagras endast i användarens lokala app-profil:
 - länkar och uppladdade filer
 - appens inställningar
 
-I Windows-versionen ligger profilen under `%LOCALAPPDATA%\Studieportalen`. Den ligger skild från programfilen. Det betyder att en ny nedladdning alltid är tom och att en byggd eller delad `Studieportalen.exe` inte innehåller användarens data.
+I den portabla Windows-versionen ligger profilen under `%LOCALAPPDATA%\Studieportalen`. Den förberedda Microsoft Store-versionen har i stället en separat profil under `%LOCALAPPDATA%\Packages\<PackageFamilyName>\LocalState\Studieportalen\WebView`. På Mac används `~/Library/Application Support/Studieportalen`. Profilerna ligger skilda från programfilerna och ingår aldrig i ett byggt eller delat program.
+
+Vid övergång från den portabla appen till Store används **Exportera säkerhetskopia** och **Importera säkerhetskopia**. Store-uppdateringar med samma appidentitet använder samma profil. Avinstallation eller återställning av Store-appen kan ta bort dess lokala data; exportera därför en säkerhetskopia först.
 
 Den som väljer **Exportera säkerhetskopia** skapar själv en JSON-fil med profilen och eventuella uppladdade filer. Säkerhetskopian kan innehålla privat information och ska hanteras som en personlig fil.
 

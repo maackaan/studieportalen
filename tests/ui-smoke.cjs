@@ -16,7 +16,7 @@ const key = 'studieportalen-data-v2';
     const firstResponse = await page.goto(process.env.APP_URL || 'http://localhost:4173');
     assert.match((await firstResponse.allHeaders())['content-security-policy'],/object-src 'none'/);
     assert.equal(await page.locator('#courseCount').textContent(), '0');
-    assert.equal(await page.locator('.app-version').textContent(), 'Version 0.1.0-beta.3');
+    assert.equal(await page.locator('.app-version').textContent(), 'Version 0.1.0-beta.4-dev');
     await page.evaluate(() => {
       state.courses = Array.from({length: 5}, (_, index) => ({
         id: `overview-${index + 1}`,
@@ -203,9 +203,20 @@ const key = 'studieportalen-data-v2';
     assert.equal(await page.evaluate(() => state.courses.length),1);
     assert.equal(await page.evaluate(async () => (await getFile(state.resources.find(x=>x.name === 'Testfil').id)).text()),'lokalt filinnehåll');
 
+    // Reproduce the reported overview: long course name, separate code/time/type
+    // and a deadline that ends after midnight. Do not change the backup fixture.
+    await page.evaluate(() => {
+      const start = new Date(); start.setDate(start.getDate() + 1); start.setHours(23,59,0,0);
+      state.events.unshift({id:'layout-midnight', name:'Milestone 2', courseId:state.courses[0].id, type:'deadline', date:start.toISOString(), endDate:new Date(start.getTime()+3600000).toISOString()});
+      renderAll(); switchView('overview');
+    });
+    await page.locator('#upcomingDateList [data-preview-event="layout-midnight"]').click();
+    assert.match(await page.locator('#eventPreviewContent').textContent(), /23:59–00:59/);
+    await page.locator('[data-close-event-preview]').click();
+
     for (const view of ['overview','courses','resources']) {
       await page.evaluate(viewName => switchView(viewName), view);
-      for (const width of [1280,768,520,360]) {
+      for (const width of [1440,1280,1101,900,821,768,520,360]) {
         await page.setViewportSize({width,height:820});
         await page.evaluate(() => scrollTo({top:0,left:0,behavior:'instant'}));
         const overflow = await page.evaluate(() => ({
@@ -219,6 +230,17 @@ const key = 'studieportalen-data-v2';
         assert.ok(overflow.pageWidth <= overflow.viewportWidth,`${view} overflows at ${width}px: ${JSON.stringify(overflow.offenders)}`);
         if (view === 'overview') {
           assert.ok(await page.locator('#upcomingDateList .recent-item').count() > 0, 'Overview events are missing');
+          assert.equal(await page.locator('#upcomingDateList .event-course-link').first().textContent(), 'TEST01');
+          assert.ok(await page.locator('#upcomingDateList .recent-item').evaluateAll((items) => items.every((item) => {
+            const meta = item.querySelector('.event-meta');
+            const course = meta.firstElementChild.getBoundingClientRect();
+            const timeElement = item.querySelector('.event-time');
+            const time = timeElement.getBoundingClientRect();
+            const type = item.querySelector('.date-chip').getBoundingClientRect();
+            const content = meta.parentElement.getBoundingClientRect();
+            return course.bottom <= time.top + 1 && time.bottom <= type.top + 1
+              && time.right <= content.right + 1 && timeElement.scrollWidth <= timeElement.clientWidth + 1;
+          })), `Overview event metadata is wrapped or in the wrong order at ${width}px`);
           assert.ok(await page.locator('#upcomingDateList .recent-item').evaluateAll((items) => items.every((item) => {
             const content = item.querySelector(':scope > div:not(.item-actions)');
             const actions = item.querySelector('.item-actions');
@@ -243,8 +265,10 @@ const key = 'studieportalen-data-v2';
       }
     }
 
+    await page.evaluate(() => { state.events = state.events.filter(event => event.id !== 'layout-midnight'); renderAll(); });
+
     await page.evaluate(() => openCourse(state.courses[0].id));
-    for (const width of [1280,768,520,360]) {
+    for (const width of [1440,1280,1101,900,821,768,520,360]) {
       await page.setViewportSize({width,height:820});
       await page.evaluate(() => scrollTo({top:0,left:0,behavior:'instant'}));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`Page overflows at ${width}px`);
@@ -264,12 +288,23 @@ const key = 'studieportalen-data-v2';
     }
     await page.evaluate(() => switchView('calendar'));
     await page.evaluate(() => { calendarWeekStart = startOfWeek(new Date(2026, 9, 14)); renderCalendar(); });
-    for (const width of [1280,768,520,360]) {
+    for (const width of [1440,1280,1101,900,821,768,520,360]) {
       await page.setViewportSize({width,height:820});
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`Calendar overflows at ${width}px`);
       assert.ok(await page.locator('#calendarWeek').isVisible(),`Calendar week is hidden at ${width}px`);
       assert.ok(await page.locator('.calendar-event').count() >= 5,`Calendar blocks are missing at ${width}px`);
       assert.ok(await page.locator('.calendar-week-body').evaluate(element => element.getBoundingClientRect().height >= 950),`Calendar grid collapsed at ${width}px`);
+      const scrollArea = page.locator('#calendarWeekScroll');
+      await scrollArea.evaluate(element => { element.scrollTop = 50; element.scrollLeft = 50; });
+      const scroll = await scrollArea.evaluate(element => ({top: element.scrollTop, left: element.scrollLeft, width: element.clientWidth, contentWidth: element.scrollWidth}));
+      assert.equal(scroll.top, 0, `Calendar has an unintended vertical scroll area at ${width}px`);
+      if (width > 820) {
+        assert.equal(scroll.left, 0, `Desktop calendar shifts sideways at ${width}px`);
+        assert.ok(scroll.contentWidth <= scroll.width + 1, `Desktop calendar does not fit at ${width}px`);
+      } else {
+        assert.ok(scroll.left > 0, `Small-screen calendar cannot scroll to later weekdays at ${width}px`);
+      }
+      await scrollArea.evaluate(element => { element.scrollLeft = 0; });
       await page.screenshot({path:`build/ui-calendar-${width}.png`,fullPage:true,animations:'disabled'});
     }
     await page.setViewportSize({width:1280,height:820});
@@ -317,6 +352,23 @@ const key = 'studieportalen-data-v2';
     await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('Profilen återställd'));
     assert.equal(await page.locator('#courseCount').textContent(),'1');
     assert.equal(await page.evaluate(() => storageReadFailed),false);
+    // Model the GitHub -> Store transition: a completely separate profile
+    // imports the exported backup, including actual attachment bytes.
+    const storeContext = await browser.newContext({viewport:{width:1280,height:820}});
+    const storePage = await storeContext.newPage();
+    storePage.on('dialog', dialog => dialog.accept());
+    storePage.on('pageerror', error => errors.push(error.message));
+    await storePage.goto(process.env.APP_URL || 'http://localhost:4173');
+    assert.equal(await storePage.locator('#courseCount').textContent(),'0');
+    await storePage.locator('#importInput').setInputFiles({name:'from-portable.json',mimeType:'application/json',buffer:backup});
+    await storePage.waitForFunction(() => document.querySelector('#toast').textContent.includes('Profilen återställd'));
+    assert.equal(await storePage.locator('#courseCount').textContent(),'1');
+    assert.equal(await storePage.evaluate(() => state.resources.length),3);
+    assert.equal(await storePage.evaluate(() => state.events.length),10);
+    assert.equal(await storePage.evaluate(async () => (await getFile(state.resources.find(x => x.name === 'Testfil').id)).text()),'lokalt filinnehåll');
+    await storePage.reload();
+    assert.equal(await storePage.locator('#courseCount').textContent(),'1');
+    await storeContext.close();
     await page.evaluate(() => navigator.serviceWorker.ready);
     if (!await page.evaluate(() => Boolean(navigator.serviceWorker.controller))) await page.reload();
     await context.setOffline(true);

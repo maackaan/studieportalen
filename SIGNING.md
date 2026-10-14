@@ -1,5 +1,11 @@
 # Kodvalidering och signering
 
+## Uppdatering 2026-10-12
+
+Windows-loggen bekräftade åter blockering av den osignerade `Studieportalen.exe` genom Smart App Control. Administratörsrättigheter eller SmartScreens “Kör ändå” löser inte en SAC-blockering. Projektägaren har därefter själv stängt av SAC för lokal utveckling; lokala uppstartstester ska därför inte rapporteras som SAC-godkända.
+
+MSIX/Store-spåret är valt för fortsatt förberedelse. Ett osignerat previewpaket kan byggas med Windows SDK och programmet starttestas med tillfällig profil. Den riktiga Store-identiteten, installation med paketidentitet, WACK och Microsofts granskning återstår. Store-signeringen gäller det godkända MSIX-paketet och gör inte den portabla GitHub-EXE-filen signerad. Se [STORE_RELEASE.md](STORE_RELEASE.md) för nästa steg och bevarande av data.
+
 ## Läget 2026-09-14
 
 Funktionstester och gränssnittstester går igenom, och Windows-programmet kan byggas. Den lokala programfilen är osignerad (`NotSigned`). Händelserna 3033 och 3077 i Code Integrity-loggen visar att Smart App Controls aktiva policy `VerifiedAndReputableDesktop` (`{0283ac0f-fff1-49ae-ada1-8a933130cad6}`) blockerade just Studieportalen.exe eftersom den inte uppfyllde Enterprise signing level. AppLocker hade ingen matchande händelse och inget Defender-utslag hittades. Registret visade spärrläge (`VerifiedAndReputablePolicyState = 1`). Skyddet har inte ändrats eller kringgåtts.

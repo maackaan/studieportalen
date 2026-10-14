@@ -28,3 +28,9 @@ studieportalen-backup-*.json
 
 # Lokal arbetsöverlämning för Codex
 NEXT_SESSION_PLAN.md
+
+# Lokal Store-identitet och signeringsnycklar
+packaging/store-identity.local.json
+*.pfx
+*.p12
+*.key

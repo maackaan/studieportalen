@@ -1,5 +1,9 @@
 # Betachecklista för Studieportalen
 
+## Store-kandidat efter Beta 3
+
+Status 2026-10-12: lokala layoutfixar och MSIX-förberedelser utvecklas som `0.1.0-beta.4-dev`. Översikten visar kurskod över tiden och händelsetyp längst ner; kalenderns oavsiktliga inre rullning är borttagen i desktopläge. Se [STORE_RELEASE.md](STORE_RELEASE.md) för paketbygge, datalagring, övergång från GitHub och kvarvarande Store-acceptans. Ett starttest med SAC avstängt är inte ett SAC-acceptanstest.
+
 ## Klart i koden
 
 - Tom standardprofil utan valda kurser eller personlig information.

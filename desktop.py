@@ -20,12 +20,38 @@ PORT = 4173
 URL = f"http://{HOST}:{PORT}"
 
 
+def windows_package_family_name() -> str | None:
+    """Detect MSIX identity; never confuse a Store profile with the ZIP profile."""
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    from ctypes import wintypes
+
+    get_family = ctypes.WinDLL("kernel32", use_last_error=True).GetCurrentPackageFamilyName
+    get_family.argtypes = [ctypes.POINTER(wintypes.UINT), wintypes.LPWSTR]
+    get_family.restype = wintypes.LONG
+    size = wintypes.UINT(0)
+    result = get_family(ctypes.byref(size), None)
+    if result == 15700:  # APPMODEL_ERROR_NO_PACKAGE: ordinary GitHub executable.
+        return None
+    if result != 122 or not size.value:  # ERROR_INSUFFICIENT_BUFFER
+        raise RuntimeError(f"Windows kunde inte identifiera appens lagring ({result}).")
+    buffer = ctypes.create_unicode_buffer(size.value)
+    result = get_family(ctypes.byref(size), buffer)
+    if result:
+        raise RuntimeError(f"Windows kunde inte identifiera appens lagring ({result}).")
+    return buffer.value
+
+
 def storage_directory() -> Path:
     """Returnera en stabil, användarspecifik mapp för WebView-profilen."""
     if sys.platform == "darwin":
         base = Path.home() / "Library" / "Application Support"
-    elif os.name == "nt":
+    elif sys.platform == "win32":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        family = windows_package_family_name()
+        if family:
+            base = base / "Packages" / family / "LocalState"
     else:
         base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
     path = base / "Studieportalen" / "WebView"

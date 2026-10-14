@@ -1,0 +1,77 @@
+name: Förbered Microsoft Store (MSIX)
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: Lokal testidentitet (kan inte skickas till Store)
+        type: boolean
+        default: true
+      identity_name:
+        description: Package Identity Name från Partner Center
+        type: string
+      publisher:
+        description: Package Identity Publisher från Partner Center (CN=...)
+        type: string
+      publisher_display_name:
+        description: Publisher Display Name från Partner Center
+        type: string
+      package_version:
+        description: MSIX-version (fjärde delen ska vara 0)
+        type: string
+        default: '1.0.4.0'
+
+permissions:
+  contents: read
+
+jobs:
+  store-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Installera byggverktyg och testa gränssnitt
+        run: |
+          python -m pip install --requirement requirements-build-lock.txt
+          npm ci --ignore-scripts
+          npx playwright install chromium
+          node --test tests/calendar_import.test.cjs
+          node --check dist/app.js
+          python tools/test_ui.py
+      - name: Skapa osignerat MSIX-underlag
+        shell: pwsh
+        env:
+          STORE_PREVIEW: ${{ inputs.preview }}
+          STORE_IDENTITY: ${{ inputs.identity_name }}
+          STORE_PUBLISHER: ${{ inputs.publisher }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ inputs.publisher_display_name }}
+          STORE_VERSION: ${{ inputs.package_version }}
+        run: |
+          if ($env:STORE_PREVIEW -eq 'true') {
+            python tools/build_store.py --preview
+          } else {
+            $identityPath = Join-Path $env:RUNNER_TEMP 'store-identity.json'
+            @{
+              identity_name = $env:STORE_IDENTITY
+              publisher = $env:STORE_PUBLISHER
+              publisher_display_name = $env:STORE_PUBLISHER_DISPLAY_NAME
+              display_name = 'Studieportalen'
+              version = $env:STORE_VERSION
+            } | ConvertTo-Json | Set-Content -LiteralPath $identityPath -Encoding utf8
+            python tools/build_store.py --identity $identityPath
+          }
+      - name: Ladda upp underlag för granskning (ingen publicering)
+        uses: actions/upload-artifact@v7
+        with:
+          name: Studieportalen-MSIX-underlag
+          path: |
+            build-output/*.msix
+            build-output/*.sha256
+            build-output/*.json
+          if-no-files-found: error
